@@ -1,7 +1,7 @@
 # Simplified-Rocket-Simulation
 
-Developped by James Huynh and Thomas Corbeil
-Supervised by Caroline Houle
+<em> Developped by James Huynh and Thomas Corbeil <br>
+Supervised by Caroline Houle </em>
 
 Features three phases: construction, launch, orbit
   
