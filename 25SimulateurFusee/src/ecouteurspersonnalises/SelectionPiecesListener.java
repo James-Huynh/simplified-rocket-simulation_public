@@ -1,0 +1,22 @@
+package ecouteurspersonnalises;
+
+import java.util.EventListener;
+/**
+ * Classe de listener qui indique quand une pièce est sélectionnée dans la zone d'assemblage et qui retourne son indice
+ * @author Thomas Corbeil
+ *
+ */
+public interface SelectionPiecesListener
+extends EventListener {
+	/**
+	 * Listener qui indique quand une pièce est sélectionnée dans la zone d'assemblage et qui retourne son indice
+	 * @param k l'indice de la pièce sélectionnée
+	 */
+	public void envoyerPieces(int k); //Remplacer piece par indice de la pièce dans le tableau de pièces
+	
+	/**
+	 * Listener qui indique quand une pièce est retirée de la zone d'assemblage
+	 * @param k l'indice de la zone sélectionnée
+	 */
+	public void enleverPieces(int k);
+}

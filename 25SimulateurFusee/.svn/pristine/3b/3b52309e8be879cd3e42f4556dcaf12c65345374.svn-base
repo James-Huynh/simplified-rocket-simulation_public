@@ -1,0 +1,43 @@
+package menuoptionapplication;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.border.EmptyBorder;
+/**
+ * La classe ConceptsScientifiques affiche le menu des concepts scientifiques
+ * @author James Huynh
+ *
+ */
+public class ConceptsScientifiques extends JFrame {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -143713004113554267L;
+	private JPanel contentPane;
+
+	/**
+	 * Create the frame.
+	 */
+	public ConceptsScientifiques() {
+		setTitle("Concepts scientifiques");
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+		setBounds(100, 100, 763, 422);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+		
+		JScrollPane scrollConceptsScientifiques = new JScrollPane();
+		scrollConceptsScientifiques.setBounds(0, 0, 747, 384);
+		contentPane.add(scrollConceptsScientifiques);
+		
+		JTextPane txtConceptsScientifiques = new JTextPane();
+		txtConceptsScientifiques.setEditable(false);
+		txtConceptsScientifiques.setText("Dans cette application, divers notions scientifiques, notamment de la physique, sont appliqu\u00E9es sur une fus\u00E9e.\r\n\r\nDurant le d\u00E9collage et le vol orbital, en tenant compte de la masse, de la pouss\u00E9e, de la gravit\u00E9 et m\u00EAme de l'angle de la fus\u00E9e, nous pouvons utiliser ces param\u00E8tres pour calculer la vitesse, l'acc\u00E9l\u00E9ration et la position. Ceci constitute la base du mouvement de la fus\u00E9e, en d'autres mots, la m\u00E9canique.\r\n\r\nEn effet, les trois lois de Newton sont mises en application: le concept d'inertie, d'acc\u00E9l\u00E9ration avec force et d'action avec r\u00E9action. Toutefois, d\u00FB \u00E0 des complications et pour simplifier le mod\u00E8le physique, la resistance de l'air est compl\u00E8tement n\u00E9glig\u00E9e.\r\n\r\nEn addition, durant l'orbite, ");
+		scrollConceptsScientifiques.setViewportView(txtConceptsScientifiques);
+	}
+}

@@ -1,0 +1,398 @@
+package zonededessin;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.net.URL;
+
+import javax.imageio.ImageIO;
+import javax.swing.JPanel;
+import javax.swing.event.EventListenerList;
+
+import ecouteurspersonnalises.MettreAJourDonneesVolListener;
+import ecouteurspersonnalises.PasserAuVolOrbitalListener;
+import modelephysique.ModelePhysique;
+import moteurphysique.MoteurPhysiqueVol;
+import nuage.Nuage;
+import pieces.EnsemblePieces;
+import vecteur.Vecteur;
+/**
+ * La classe zone de dessin décollage représente un dessin de la fusée tout au long du décollage
+ * @author Thomas Corbeil
+ *
+ */
+public class ZoneDessinDecollage extends JPanel implements Runnable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -668584627745721839L;
+	private final EventListenerList OBJETS_ENREGISTRES = new EventListenerList();
+	private EnsemblePieces fusee;
+	private boolean premiereFois = true;
+	private boolean enCoursDAnimation = false;
+	private ModelePhysique modele;
+	private AffineTransform matMC;
+	private double uniteeReellePanelY;
+	private double hauteurCapsule;
+	private double hauteurReservoir;
+	private double hauteurMoteur;
+	private double largeurFusee;
+	private double longueurFusee;
+	private double poussee;
+	private Vecteur position = new Vecteur(0, 0);
+	private Vecteur vitesse = new Vecteur(0, 0);
+	private Vecteur acceleration = new Vecteur(0, 0);
+	private double inclinaison = 90;
+	private double pourcentagePoussee = 1.0;
+	private int tempsSleep = 10;
+	private int nbIterationChangementFeu = 0;
+	private Color ciel ;
+	private int nbCalculs;
+	private Nuage nuageActif;
+	private int randomPlanNuage;
+	private Image explosion;
+	private final int NB_CALCULS_DEFAUT = 1;
+	private final double ROUGE_CIEL = 73;
+	private final double VERT_CIEL = 156;
+	private final double BLEU_CIEL = 255;
+	private final double LARGEUR_MONDE = 12;
+	private final double CONSTANTE_MONDE = 10.0;
+	private final double DELTAT = 0.005;
+	private final double CONSTANTE_REDRESSEMENT = 90.0;
+	private final double CONSTANTE_ALTITUDE = 100000.0;
+	private final double ALTITUDE_MAX_NUAGES = 50000.0;
+	private final double DIMENSIONS_NUAGE = 8;
+	private final int ITERATIONS_FEU = 10;
+	private final double CONSTANTE_EPAISSEUR = 0.3;
+	private final int TAILLE_POLICE = 40;
+	private final String TEXTE_ECHEC = "Lancement échoué!";
+	/**
+	 * Create the panel.
+	 * @param fusee l'ensemble de pièces contenant la fusée
+	 */
+	public ZoneDessinDecollage(EnsemblePieces fusee) {
+		setBackground(ciel);
+		this.fusee = fusee;
+	}
+	/**
+	 * Méthode qui s'occupe de dessinner les divers éléments de la zone de dessin de décollage
+	 * @param g le contexte graphique
+	 */
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		Graphics2D g2d = (Graphics2D) g;	
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+		
+		
+		if(premiereFois) {
+			ModelePhysique modeleTemp = new ModelePhysique(getWidth(), getHeight(), 0, 0, LARGEUR_MONDE);
+			uniteeReellePanelY = modeleTemp.getHautUnitesReelles();
+			premiereFois = false;
+			genererNuage();
+			randomPlanNuage = (int) (Math.random() * 100);
+			initialiserImageExplosion();
+		}
+		
+		if((enCoursDAnimation && (pourcentagePoussee > 0)) && (!fusee.reservoirVide())) {
+			fusee.getMoteur().setDessinerFeu(true);
+		} else {
+			fusee.getMoteur().setDessinerFeu(false);
+		}
+		
+		if(position.getY() < ALTITUDE_MAX_NUAGES) {
+			if(nuageActif.getY() < (position.getY() - (uniteeReellePanelY) - DIMENSIONS_NUAGE)) {
+				genererNuage();
+				randomPlanNuage = (int) (Math.random() * 100);
+			}
+		}
+		
+		setBackground(ciel);
+		modele = new ModelePhysique(getWidth(), getHeight(), (LARGEUR_MONDE/2) - (largeurFusee/2), position.getY() + (uniteeReellePanelY/2) - (longueurFusee/2), LARGEUR_MONDE);
+		matMC = modele.getMatMC();
+		matMC.scale(1, -1);
+
+		g2d.setColor(Color.DARK_GRAY);
+		Rectangle2D.Double rectBase = new Rectangle2D.Double(-(LARGEUR_MONDE/2) + largeurFusee/2, -1.5, LARGEUR_MONDE, 1.8);
+		Shape shapeBase = matMC.createTransformedShape(rectBase);
+		g2d.fill(shapeBase);
+
+		if(randomPlanNuage > 50) { //Dessine le nuage à  l'arrière  plan
+			nuageActif.dessinerNuage(g2d, matMC);
+		}
+		
+		if(position.getY() < longueurFusee + CONSTANTE_EPAISSEUR && vitesse.getY() < 0) {
+			AffineTransform matOriginale = g2d.getTransform();
+			Point2D.Double point = new Point2D.Double();
+			
+			Rectangle2D.Double rectImageReelle = new Rectangle2D.Double(0, position.getY() - fusee.longueurFusee(), fusee.largeurFusee(), fusee.longueurFusee());
+			Shape rectTransfo = matMC.createTransformedShape(rectImageReelle);
+			Rectangle2D rectCoordTransfo = rectTransfo.getBounds2D();
+			Image imageADessiner = explosion.getScaledInstance((int) rectCoordTransfo.getWidth(), (int) rectCoordTransfo.getHeight(), Image.SCALE_SMOOTH);
+			point.setLocation(largeurFusee/2, position.getY() - (longueurFusee/2));
+			matMC.transform(point, point);
+			g2d.rotate(Math.toRadians(inclinaison - CONSTANTE_REDRESSEMENT), point.getX(), point.getY());
+			g2d.drawImage(imageADessiner, (int)	Math.round(rectCoordTransfo.getX()), (int) Math.round(rectCoordTransfo.getY()), null);
+			g2d.setTransform(matOriginale);
+			
+			enCoursDAnimation = false;
+			
+			Font police = new Font("Agency FB",  Font.PLAIN, TAILLE_POLICE);
+			FontMetrics largeurFont = g2d.getFontMetrics (police);
+			int largeurChaine = largeurFont.stringWidth (TEXTE_ECHEC);
+			g2d.setColor(Color.RED);
+			g2d.setFont(new Font("Agency FB", Font.PLAIN, TAILLE_POLICE));
+			g2d.drawString(TEXTE_ECHEC, (int) (getWidth()/2 - largeurChaine/2), (int) getHeight()/2);
+			
+		} else {
+			
+			fusee.getCapsule().dessiner(g2d, matMC, inclinaison - CONSTANTE_REDRESSEMENT, 0, position.getY() - (hauteurCapsule/CONSTANTE_MONDE),  largeurFusee/2, position.getY() - (longueurFusee/2));
+			fusee.getReservoir().dessiner(g2d, matMC, inclinaison - CONSTANTE_REDRESSEMENT, 0, position.getY()  - (hauteurReservoir/CONSTANTE_MONDE) - (hauteurCapsule/CONSTANTE_MONDE), largeurFusee/2, position.getY() - (longueurFusee/2));
+			fusee.getMoteur().dessiner(g2d, matMC, inclinaison - CONSTANTE_REDRESSEMENT, 0, position.getY()  - (hauteurReservoir/CONSTANTE_MONDE) - (hauteurCapsule/CONSTANTE_MONDE) - (hauteurMoteur/CONSTANTE_MONDE),largeurFusee/2, position.getY() - (longueurFusee/2));
+		
+		}
+		
+		if(randomPlanNuage < 50) { //Dessine le nuage à l'avant plan
+			nuageActif.dessinerNuage(g2d, matMC);
+		}
+		
+		
+		
+	}
+	/**
+	 * Méthode qui s'occupe de faire rouler le thread responsable de l'animation
+	 */
+	@Override
+	public void run() {
+		while(enCoursDAnimation) {
+			if((position.getY() < longueurFusee + CONSTANTE_EPAISSEUR) && (acceleration.getY() < 0)) {
+				position.setY(longueurFusee + CONSTANTE_EPAISSEUR);
+				vitesse.setXY(0, 0);
+				acceleration.setXY(0, 0);
+			} else {
+				if(!fusee.reservoirVide()) {
+					for(int k = 0; k < nbCalculs; k++) {
+						MoteurPhysiqueVol.unCalculDecollage(position, vitesse, acceleration, poussee * pourcentagePoussee, fusee.getMasseAvecCarburant(), DELTAT, inclinaison);
+					}
+				} else {
+					for(int k = 0; k < nbCalculs; k++) {
+						MoteurPhysiqueVol.unCalculDecollage(position, vitesse, acceleration, 0.0, fusee.getMasseAvecCarburant(), DELTAT, inclinaison);
+					}
+				}
+			}
+			
+			nuageActif.bougerNuageLateralement(vitesse, DELTAT);
+			
+			double pourcentageAltitude = (1.0 - (position.getY())/CONSTANTE_ALTITUDE);
+			if (pourcentageAltitude > 0.0) {	
+				ciel = new Color((int) (pourcentageAltitude * ROUGE_CIEL), (int) (pourcentageAltitude * VERT_CIEL), (int) (pourcentageAltitude * BLEU_CIEL));
+			} else {
+				ciel = new Color( 0, 0, 0);
+			}
+			
+			for(int k = 0; k < nbCalculs; k++) {
+				fusee.consommerCarburant(DELTAT, pourcentagePoussee);
+			}
+			
+			leverEvenDonneesVol();
+			repaint();
+			
+			if(position.getY() > CONSTANTE_ALTITUDE) {
+				passerAuVolOrbital();
+			}
+			System.out.println(position);
+			
+			try {
+				Thread.sleep(tempsSleep);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			
+			nbIterationChangementFeu++;
+			
+			if(nbIterationChangementFeu == ITERATIONS_FEU) {
+				fusee.getMoteur().prochainFeuActif();
+				nbIterationChangementFeu = 0;
+			}
+			
+			
+		}
+	}
+	/**
+	 * Méthode qui permet de passer à la phase orbitale et d'interrompre l'animation de la phase de décollage
+	 */
+	private void passerAuVolOrbital() {
+		enCoursDAnimation = false;
+		fusee.setVitesseOrbital(new Vecteur(vitesse.getX(), vitesse.getY()));
+		leverEvenVolOrbital();
+	}
+	/**
+	 * Méthode qui s'occupe de lancer le thread s'occupant d'animaer la zone et de faire les calculs physiques
+	 */
+	public void lancerLeDecollage() {
+		if (!enCoursDAnimation) { 
+			Thread proc = new Thread(this);
+			enCoursDAnimation = true;
+			proc.start();
+		}
+	}
+	/**
+	 * Méthode s'occuppant d'ajouter les listener passerAuVolOrbital à une collection de listeners
+	 * @param obj le listener que l'on veut ajouter à la collection
+	 */
+	public void addPasserAuVolOrbitalListener (PasserAuVolOrbitalListener obj) {
+		OBJETS_ENREGISTRES.add(PasserAuVolOrbitalListener.class, obj);
+	}
+	/**
+	 * Méthode qui lève l'évenement des listeners permettants de passer au vol orbital
+	 */
+	private void leverEvenVolOrbital() {
+		for (PasserAuVolOrbitalListener ecout: OBJETS_ENREGISTRES.getListeners(PasserAuVolOrbitalListener.class)) {
+			ecout.passerAuVolOrbital();
+		}
+	}
+	/**
+	 * Méthode s'occuppant d'ajouter les listener mettreAJourDonneesVolListener à une collection de listeners
+	 * @param obj le listener que l'on veut ajouter à la collection
+	 */
+	public void addMettreAJourDonneesVolListener (MettreAJourDonneesVolListener obj) {
+		OBJETS_ENREGISTRES.add(MettreAJourDonneesVolListener.class, obj);
+	}
+	/**
+	 * Méthode qui lève l'évenement des listeners permettants de mettre a jour les données de vol du décollage
+	 */
+	private void leverEvenDonneesVol() {
+		for (MettreAJourDonneesVolListener ecout: OBJETS_ENREGISTRES.getListeners(MettreAJourDonneesVolListener.class)) {
+			ecout.mettreAJourDonneesVol();
+		}
+	}
+	/**
+	 * Méthode qui définit l'inclinaison de la fusée
+	 * @param inclinaison l'inclinaison de la fusée en degrés
+	 */
+	public void setInclinaison(double inclinaison) {
+		this.inclinaison = inclinaison;
+	}
+	/**
+	 * Méthode qui définit le pourcentage de poussée de la fusée
+	 * @param pourcentagePoussee le pourcentage de poussée de la fusée
+	 */
+	public void setPourcentagePousse(int pourcentagePoussee) {
+		this.pourcentagePoussee = pourcentagePoussee/100.0;
+	}
+	/**
+	 * Méthode qui retourne le vecteur position de la fusée pendant le décollage
+	 * @return le vecteur position de la fusée pendant le décollage
+	 */
+	public Vecteur getPosition() {
+		return position;
+	}
+	/**
+	 * Méthode qui retourne le vecteur vitesse de la fusée pendant le décollage
+	 * @return le vecteur vitesse de la fusée pendant le décollage
+	 */
+	public Vecteur getVitesse() {
+		return vitesse;
+	}
+	/**
+	 * Méthode qui retourne le vecteur accélération de la fusée pendant le décollage
+	 * @return le vecteur accélération de la fusée pendant le décollage
+	 */
+	public Vecteur getAcceleration() {
+		return acceleration;
+	}
+	/**
+	 * Méthode qui retourne le vecteur poussée de la fusée pendant le décollage
+	 * @return le vecteur poussée de la fusée pendant le décollage
+	 */
+	public Vecteur getPoussee() {
+		 return MoteurPhysiqueVol.calculerPousseeDecollage(poussee * pourcentagePoussee, inclinaison);
+	}
+	/**
+	 * Méthode qui met à jour les valeur de la fusée
+	 */
+	public void initialiserValeurs() {
+		hauteurCapsule = fusee.getCapsule().getHauteur();
+		hauteurReservoir = fusee.getReservoir().getHauteur();
+		hauteurMoteur = fusee.getMoteur().getHauteur();
+		largeurFusee = fusee.largeurFusee();
+		longueurFusee = fusee.longueurFusee();
+		poussee = fusee.getPousseeFusee();
+		acceleration = new Vecteur(0, 0);
+		vitesse = new Vecteur(0, 0);
+		position = new Vecteur(0, longueurFusee + 0.3);
+		ciel = new Color((int) (ROUGE_CIEL), (int) (VERT_CIEL), (int) (BLEU_CIEL));
+		nbCalculs = NB_CALCULS_DEFAUT;
+		randomPlanNuage = 0;
+		repaint();
+	}
+	/**
+	 * Méthode qui réinitialise les valeurs de la zone de dessin orbitale
+	 */
+	public void reinitialiserValeurs() {
+		enCoursDAnimation = false;
+		premiereFois = true;
+		modele = null;
+		matMC = null;
+		uniteeReellePanelY = 0;
+		hauteurCapsule = 0;
+		hauteurReservoir = 0;
+		hauteurMoteur = 0;
+		largeurFusee = 0;
+		longueurFusee = 0;
+		poussee = 0;
+		position = new Vecteur(0, longueurFusee + 0.3);
+		vitesse = new Vecteur(0, 0);
+		acceleration = new Vecteur(0, 0);
+		inclinaison = 90;
+		pourcentagePoussee = 1.0;
+		nbCalculs = NB_CALCULS_DEFAUT;
+		ciel = new Color((int) (ROUGE_CIEL), (int) (VERT_CIEL), (int) (BLEU_CIEL));
+		genererNuage();
+		randomPlanNuage = 0;
+	}
+	/**
+	 * Méthode qui définit l'écoulement du temps de la simulation au décollage 
+	 * @param facteur le facteur d'écoulement du temps (entier).
+	 */
+	public void definirEcoulementTemps(int facteur) {
+		nbCalculs = NB_CALCULS_DEFAUT * facteur;
+	}
+	/**
+	 * Méthode qui génère les nuages de facon aléatoire
+	 */
+	private void genererNuage() {
+		double minX = -1*(LARGEUR_MONDE/2) - (largeurFusee/2);
+		double maxX = (LARGEUR_MONDE/2) - (largeurFusee/2);
+		double posX = (maxX - minX) * Math.random() + minX;
+		double posY = position.getY() + (uniteeReellePanelY/2) - (longueurFusee/2);
+	
+		nuageActif = new Nuage(posX, posY);
+	}
+	/**
+	 * Méthode qui initialise l'image de l'explosion
+	 */
+	private void initialiserImageExplosion() {
+		URL urlImage = getClass().getClassLoader().getResource("EXPLOSION.png");
+		
+		if(urlImage == null) {
+			System.out.println("L'image est EXPLOSION.png introuvable");
+		}
+		
+		try {
+			explosion = ImageIO.read(urlImage);
+		} catch (IOException e) {
+			System.out.println("Il est impossible de lire le fichier EXPLOSION.png");
+		}
+	}
+
+}

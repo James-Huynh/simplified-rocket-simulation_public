@@ -1,0 +1,124 @@
+package moteurphysique;
+
+import java.awt.event.KeyEvent;
+
+import vecteur.Vecteur;
+/**
+ * La classe MoteurPhysiqueOrbite est composée de méthodes permetant de calculer des variables physique durant le vol orbital
+ * @author James Huynh
+ *
+ */
+public class MoteurPhysiqueOrbite {
+
+	final static double CONSTANTE_GRAVITATIONNELLE = 6.674e-11;
+	final static double CONSTANTE_TERRESTRE = 9.807;
+
+	/**
+	 * Méthode pour calculer le vecteur de la force gravitationnelle exercée sur un objet
+	 * @param m La masse de l'objet (fusée)
+	 * @param zM La masse du corps céleste (Terre)
+	 * @param position Le vecteur de la postion de la fusée
+	 * @return vF Le vecteur de la force gravitationnelle
+	 */
+	public static Vecteur forceGravitationnelle (double m, double zM, Vecteur position) {
+		double d = position.module();
+		Vecteur u = null;
+		
+		try {
+			u = (position.multiplie(-1)).normalise();
+		} catch (Exception e) {
+			System.out.println("Erreur pour le vecteur direction (u) de la forceGrav");
+			e.printStackTrace();
+		}
+		double f = (zM*m*CONSTANTE_GRAVITATIONNELLE)/(d*d);
+		Vecteur vF = u.multiplie(f);
+		return (vF);
+	}
+
+	/**
+	 * Méthode qui retourne l'angle d'un vecteur par rapport à l'horizontal
+	 * @param vV Le vecteur 
+	 * @return L'angle en degrés
+	 */
+	public static double angleVecteur (Vecteur vV) {
+		double x = vV.getX();
+		double y = vV.getY();
+
+		if (x > 0 && y >= 0) {
+			return (Math.atan(y/x));
+		}
+
+		if (x <= 0 && y > 0) {
+			return (180 - Math.atan(y/-x));
+		}
+
+		if (x < 0 && y <= 0) {
+			return (180 + Math.atan(-y/-x));
+		}
+
+		if (x >= 0 && y < 0) {
+			return (360 - Math.atan(-y/x));
+		}
+
+		System.out.println("Le vecteur est null");
+		return 0.0;	
+	}
+
+	/**
+	 * Méthode pour déterminer le vecteur du système de contrôle par réaction dans l'espace
+	 * @param e L'entrée informatique d'une touche 
+	 * @param RCS La valeur de la force RCS de la capsule
+	 * @return vRCS Le vecteur du RCS
+	 */
+	public static Vecteur forceRCS (int touche, double RCS) {
+		Vecteur vRCS = new Vecteur (0.0, 0.0);
+		switch (touche) {
+		case (KeyEvent.VK_RIGHT): 
+			vRCS = new Vecteur (RCS, 0.0);	
+		break;
+
+		case (KeyEvent.VK_UP): 
+			vRCS = new Vecteur (0.0, RCS);	
+		break;
+
+		case (KeyEvent.VK_LEFT): 
+			vRCS = new Vecteur (-RCS, 0.0);	
+		break;
+
+		case (KeyEvent.VK_DOWN): 
+			vRCS = new Vecteur (0.0, -RCS);	
+		break;
+
+		}
+		return (vRCS);
+	}
+
+	/**
+	 * Méthode pour faire la somme de tous les forces exercées sur la fusée dans l'espace
+	 * @param fg Le vecteur de force gravitationnelle
+	 * @param rcs Le vecteur de la force du RCS
+	 * @return somme Le vecteur représentant la somme des forces
+	 */
+	public static Vecteur sommeForces (Vecteur fg, Vecteur rcs) {
+		Vecteur somme;
+
+		somme = fg.additionne(rcs);
+		return (somme);
+	}
+	
+	/**
+	 * Méthode qui applique tout les changements nécessaires sur les paramètres physiques de la fusée
+	 * @param forceTotal Le vecteur force resultante sur la fusée
+	 * @param position Le vecteur position de la fusée
+	 * @param vitesse Le vecteur vitesse de la fusée
+	 * @param acceleration Le vecteur accélération
+	 * @param masse La masse de la fusée
+	 * @param deltaT L'intervalle de temps d'une itération physique
+	 */
+	public static void unCalculOrbite(Vecteur forceTotal, Vecteur position, Vecteur vitesse, Vecteur acceleration , double masse, double deltaT) {
+		MoteurPhysiqueVol.calculerAcceleration(acceleration, forceTotal, masse);
+		MoteurPhysiqueVol.calculerChangementVitesse(acceleration, vitesse, deltaT);
+		MoteurPhysiqueVol.calculerChangementPosition(vitesse, position, deltaT);	
+	}
+
+}

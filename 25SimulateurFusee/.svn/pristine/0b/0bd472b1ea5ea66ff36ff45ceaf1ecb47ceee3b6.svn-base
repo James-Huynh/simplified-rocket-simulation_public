@@ -1,0 +1,20 @@
+package interfaces;
+
+import java.awt.Graphics2D;
+
+/**
+ * interface qui rend un ballon dessinable
+ * @author Thomas Corbeil
+ *
+ */
+public interface DessinableBallon {
+	/**
+	 * Méthode qui dessinne un ballon
+	 * @param g2d le contexte graphique dans lequel on dessine le ballon
+	 * @param x la position x du ballon
+	 * @param y la position y
+	 * @param longueur la longueur du ballon
+	 * @param hauteur la hauteur du ballon
+	 */
+	public void dessinerBallon(Graphics2D g2d, int x, int y, int longueur, int hauteur);
+}

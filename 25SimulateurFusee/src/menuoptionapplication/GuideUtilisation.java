@@ -1,0 +1,68 @@
+package menuoptionapplication;
+
+import java.awt.BorderLayout;
+import java.awt.Image;
+import java.io.IOException;
+import java.net.URL;
+
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.border.EmptyBorder;
+/**
+ * La classe GuideUtilisation affiche le menu du guide d'utilisation
+ * @author Thomas Corbeil
+ *
+ */
+public class GuideUtilisation extends JFrame {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6255339335425803409L;
+	private JPanel contentPane;
+	private JScrollPane scrollPane;
+	private JLabel lblGuideUtilisation;
+	private final int HAUTEUR_REDIM = 9900;
+	private final int LARGEUR_REDIM = 1275;
+
+	/**
+	 * Create the frame.
+	 */
+	public GuideUtilisation() {
+		setTitle("Guide d'utilisation");
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setBounds(100, 100, 1329, 750);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(new BorderLayout(0, 0));
+		
+		scrollPane = new JScrollPane();
+		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		contentPane.add(scrollPane);
+
+		initialiserGuide();
+		
+		scrollPane.setViewportView(lblGuideUtilisation);
+	}
+	/**
+	 * Méthode qui initialise l'image du guide d'utilisation
+	 */
+	private void initialiserGuide() {
+		URL guide = GuideUtilisation.class.getResource("/GuideUtilisationComplet.jpg");
+		Image imageGuide = null;
+		
+		try {
+			imageGuide = ImageIO.read(guide);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		ImageIcon imageGuideRedim = new ImageIcon(imageGuide.getScaledInstance(LARGEUR_REDIM, HAUTEUR_REDIM, Image.SCALE_SMOOTH));
+		lblGuideUtilisation = new JLabel(imageGuideRedim);
+	}
+}

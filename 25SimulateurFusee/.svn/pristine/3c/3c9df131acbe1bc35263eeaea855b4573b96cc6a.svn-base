@@ -1,0 +1,15 @@
+package ecouteurspersonnalises;
+
+import java.util.EventListener;
+/**
+ * Classe de listener qui indique quand mettre les données de vol à jour pendant le décollage
+ * @author Thomas Corbeil
+ *
+ */
+public interface MettreAJourDonneesVolListener extends EventListener {
+	/**
+	 * Listener qui indique quand mettre les données de vol à jour pendant le décollage
+	 */
+	public void mettreAJourDonneesVol();
+	
+}

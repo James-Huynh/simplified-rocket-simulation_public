@@ -1,0 +1,62 @@
+package menuoptionapplication;
+
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
+import java.io.IOException;
+import java.net.URL;
+
+import javax.imageio.ImageIO;
+import javax.swing.JPanel;
+
+public class PanelGuideUtilisation extends JPanel {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private Image tabImages[] = new Image[6];
+	/**
+	 * Create the panel.
+	 */
+	public PanelGuideUtilisation() {
+		initialiserImages();
+	}
+	/**
+	 * Méthode qui dessinne le guide d'utilisation
+	 * @param g le contexte graphic
+	 */
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		Graphics2D g2d = (Graphics2D) g;	
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+		
+		int largeurImage = tabImages[0].getWidth(null);
+		int hauteurImage = tabImages[0].getHeight(null);
+		
+		this.setBounds(0, 0, largeurImage, hauteurImage);
+		
+		for(int k = 0; k < tabImages.length; k++) {
+			g2d.drawImage(tabImages[k], 0, hauteurImage * k, null);
+		}
+	}
+	/**
+	 * Méthode qui initialise un tableau des images du guide d'utilisation
+	 */
+	private void initialiserImages() {
+		for(int k = 0; k < 6; k++) { 
+			URL urlImage = getClass().getClassLoader().getResource("La Science des fusées pour les Nuls-page-00" + (k + 1) + ".jpg");
+
+			if(urlImage == null) {
+				System.out.println("L'image est introuvable");
+			}
+
+			try {
+				tabImages[k] = ImageIO.read(urlImage);
+			} catch (IOException e) {
+				System.out.println("Il est impossible de lire le fichier");
+			}
+		}
+	}
+}

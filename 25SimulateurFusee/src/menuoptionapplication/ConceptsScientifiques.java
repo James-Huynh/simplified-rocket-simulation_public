@@ -1,0 +1,67 @@
+package menuoptionapplication;
+
+import java.net.URL;
+
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+import javax.swing.border.EmptyBorder;
+/**
+ * La classe ConceptsScientifiques affiche le menu des concepts scientifiques
+ * @author James Huynh
+ *
+ */
+public class ConceptsScientifiques extends JFrame {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -143713004113554267L;
+	private JPanel contentPane, panel;
+	private JLabel lblConcepts;
+	private String nomImageConceptsScientifiques = "conceptsScientifiques_v1.png";
+	private ImageIcon imageConcepts;
+
+	/**
+	 * Create the frame.
+	 */
+	public ConceptsScientifiques() {
+		setTitle("Concepts scientifiques");
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		
+		setBounds(200, 100, 1325, 800);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+		
+		panel = new JPanel();
+		panel.setBounds(0, 0, 1300, 800);
+		contentPane.add(panel);
+		panel.setLayout(null);
+		
+		initialiserImageConceptsScientifiques();
+
+	}
+
+	/**
+	 * Méthode pour créer et initialiser les concepts scientifiques dans le label approprié
+	 */
+	private void initialiserImageConceptsScientifiques() {
+		URL urlImageConceptsScientifique = getClass().getClassLoader().getResource(nomImageConceptsScientifiques);
+		imageConcepts = new ImageIcon(urlImageConceptsScientifique);
+		lblConcepts = new JLabel(imageConcepts);
+		lblConcepts.setHorizontalAlignment(SwingConstants.CENTER);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		scrollPane.setBounds(0, 0, 1300, 800);
+		panel.add(scrollPane);
+		scrollPane.setViewportView(lblConcepts);
+	}
+
+}

@@ -1,0 +1,406 @@
+package pieces;
+
+import java.awt.Image;
+import java.io.IOException;
+import java.net.URL;
+
+import javax.imageio.ImageIO;
+
+import vecteur.Vecteur;
+/**
+ * La classe gère les diverses pièces d'une fusée et contient toutes les pièces existentes
+ * @author Thomas Corbeil
+ *
+ */
+public class EnsemblePieces {
+	private Pieces[] listeCompletePieces = new Pieces[9];
+	private Image[] tabFeuUS = new Image[3];
+	private Image[] tabFeuRUS = new Image[3];
+	private Image[] tabFeuPRV = new Image[3];
+	private Capsule capsule, capsuleTemp;
+	private Reservoir reservoir, reservoirTemp;
+	private Moteur moteur, moteurTemp;
+	private Vecteur position = new Vecteur(0, 0);
+	private Vecteur vitesse = new Vecteur(0, 0);
+	private Vecteur acceleration = new Vecteur(0, 0);
+	private Vecteur positionOrbitale = new Vecteur(0, 0);
+	private Vecteur vitesseOrbital = new Vecteur(0, 0);
+	private Vecteur accelerationOrbitale = new Vecteur(0, 0);
+	private final double CONSTANTE_MONDE = 10;
+	/**
+	 * Constructeur qui crée l'ensemble de pièces et initialise les diverses pièces de la fusée
+	 */
+	public EnsemblePieces() {
+		
+		initialiserTableauCompletPieces();
+
+		capsule = (Capsule) listeCompletePieces[0];
+		reservoir = (Reservoir) listeCompletePieces[3];
+		moteur = (Moteur) listeCompletePieces[6];
+	}
+	/**
+	 * Méthode qui fait consommer une certaine quantité de carburant à la fusée
+	 * @param deltaT le temps en secondes
+	 * @param pourcentagePoussee le pourcentage de poussée sélectionné
+	 */
+	public void consommerCarburant(double deltaT, double pourcentagePoussee) {
+		double consommationCarburant = moteur.getConsommationCarburant();
+		reservoir.setCarburantRestant(reservoir.getCarburantRestant() - ((consommationCarburant * deltaT) * pourcentagePoussee));
+	}
+	/**
+	 * Méthode qui indique si la capsule est présente dans la fusée
+	 * @return un booléen indiquant si la capsule est présente ou non
+	 */
+	public boolean capsulePresente() {
+		if(capsuleTemp != null) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	/**
+	 * Méthode qui indique si le réservoir est présent dans la fusée
+	 * @return un booléen indiquant si le réservoir est présent ou non
+	 */
+	public boolean reservoirPresent() {
+		if(reservoirTemp != null) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	/**
+	 * Méthode qui indique si le moteur est présent dans la fusée
+	 * @return un booléen indiquant si le moteur est présent ou non
+	 */
+	public boolean moteurPresent() {
+		if(moteurTemp != null) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	/**
+	 * Méthoe qui indique si le réservoir de la fusée est vide
+	 * @return un booléen indiquant si le réservoir est vide ou non
+	 */
+	public boolean reservoirVide() {
+		if((reservoir.getCarburantRestant()) > 0) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+	/**
+	 * Méthode qui retourne un tableau contenant toutes les pièces existante pour construire la fusée
+	 * @return un tableau contenant toutes les pièces existante pour construire la fusée
+	 */
+	public Pieces[] getListeCompletPieces() {
+		return listeCompletePieces;
+	}
+	/**
+	 * Méthode qui retourne la masse totale de la fusée sans le carburant
+	 * @return la masse totale de la fusée sans le carburant
+	 */
+	public double getMasseAVide() {
+		double masseFusee = 0;
+		
+		if(capsulePresente()) {
+			masseFusee += capsule.getMasse();
+		}
+		
+		if(reservoirPresent()) {
+			masseFusee += reservoir.getMasse();
+		}
+		
+		if(moteurPresent()) {
+			masseFusee += moteur.getMasse();
+		}
+		
+		return masseFusee;
+	}
+	/**
+	 * Méthode qui retourne la masse totale de la fusée avec le carburant
+	 * @return la masse totale de la fusée avec le carburant
+	 */
+	public double getMasseAvecCarburant() {
+		if((capsulePresente() && reservoirPresent()) && moteurPresent()) {
+			return (getMasseAVide() + (reservoir.getMasseAvecCarburant()));
+		} else {
+			return 0.0;
+		}
+	}
+	/**
+	 * Méthode qui retourne la poussée de la fusée
+	 * @return la poussée de la fusée en N
+	 */
+	public double getPousseeFusee() {
+		if(moteurPresent()) {
+			return (moteur.getPoussee());
+		} else {
+			return 0.0;
+		}
+	}
+	/**
+	 * Méthode qui retourne la poussée RCS de la fusée
+	 * @return la poussée RCS de la fusée en N
+	 */
+	public double getPousseeRCS() {
+		if(capsulePresente()) {
+			return (capsule.getForceRCS());
+		} else {
+			return 0.0;
+		}
+	}
+	/**
+	 * Méthode qui retourne la quantité de carburant maximale de la fusée
+	 * @return la quantité de carburant maximale de la fusée en L
+	 */
+	public double getCarburant() {
+		if(reservoirPresent()) {
+			return (reservoir.getCarburant());
+		} else {
+			return 0.0;
+		}
+	}
+	/**
+	 * Méthode qui retourne la quantité de carburant restante de la fusée
+	 * @return la quantité de carburant restante de la fusée en L
+	 */
+	public double getCarburantRestant() {
+		if(reservoirPresent()) {
+			return (reservoir.getCarburantRestant());
+		} else {
+			return 0.0;
+		}
+	}
+	/**
+	 * Méthode qui retourne le vecteur position de la fusée pendant le décollage
+	 * @return le vecteur position de la fusée pendant le décollage
+	 */
+	public Vecteur getPosition() {
+		return position;
+	}
+	/**
+	 * Méthode qui définit le vecteur position de la fusée pendant le décollage
+	 * @param position le vecteur position de la fusée pendant le décollage
+	 */
+	public void setPosition(Vecteur position) {
+		this.position = position;
+	}
+	/**
+	 * Méthode qui retourne le vecteur vitesse de la fusée pendant le décollage
+	 * @return le vecteur vitesse de la fusée pendant le décollage
+	 */
+	public Vecteur getVitesse() {
+		return vitesse;
+	}
+	/**
+	 * Méthode qui définit le vecteur vitesse de la fusée pendant le décollage
+	 * @param vitesse le vecteur vitesse de la fusée pendant le décollage
+	 */
+	public void setVitesse(Vecteur vitesse) {
+		this.vitesse = vitesse;
+	}
+	/**
+	 * Méthode qui retourne le vecteur accélération de la fusée pendant le décollage
+	 * @return le vecteur accélération de la fusée pendant le décollage
+	 */
+	public Vecteur getAcceleration() {
+		return acceleration;
+	}
+	/**
+	 * Méthode qui définit le vecteur accélération de la fusée pendant le décollage
+	 * @param acceleration le vecteur accélération de la fusée pendant le décollage
+	 */
+	public void setAcceleration(Vecteur acceleration) {
+		this.acceleration = acceleration;
+	}
+	/**
+	 * Méthode qui retourne la capsule de la fusée
+	 * @return un objet de type capsule définissant la capsule de la fusée
+	 */
+	public Capsule getCapsule() {
+		return capsule;
+	}
+	/**
+	 * Méthode qui définit la capsule de la fusée
+	 * @param capsule un objet de type capsule définissant la capsule de la fusée
+	 */
+	public void setCapsule(Capsule capsule) {
+		if(capsule == null) {
+			capsuleTemp = null;
+			this.capsule = (Capsule) listeCompletePieces[0];
+		} else {
+			this.capsule = capsule;
+		}
+	}
+	/**
+	 * Méthode qui retourne le réservoir de la fusée
+	 * @return un objet de type réservoir définissant le réservoir de la fusée
+	 */
+	public Reservoir getReservoir() {
+		return reservoir;
+	}
+	/**
+	 * Méthode qui définit le réservoir de la fusée
+	 * @param reservoir un objet de type réservoir définissant le réservoir de la fusée
+	 */
+	public void setReservoir(Reservoir reservoir) {
+		if(reservoir == null) {
+			reservoirTemp = null;
+			this.reservoir = (Reservoir) listeCompletePieces[3];
+		} else {
+			this.reservoir = reservoir;
+		}
+	}
+	/**
+	 * Méthode qui retourne le moteur de la fusée
+	 * @return un objet de type moteur définissant le moteur de la fusée
+	 */
+	public Moteur getMoteur() {
+		return moteur;
+	}
+	/**
+	 * Méthode qui définit le moteur de la fusée
+	 * @param moteur un objet de type moteur définissant le moteur de la fusée
+	 */
+	public void setMoteur(Moteur moteur) {
+		if(moteur == null) {
+			moteurTemp = null;
+			this.moteur = (Moteur) listeCompletePieces[6];
+		} else {
+			this.moteur = moteur;
+		}
+	}
+	/**
+	 * Méthode qui retourne la longueur de la fusée
+	 * @return la longueur de la fusée en m
+	 */
+	public double longueurFusee() {
+		return ((capsule.getHauteur() + reservoir.getHauteur() + moteur.getHauteur())/CONSTANTE_MONDE);
+	}
+	/**
+	 * Méthode qui retourne la largeur de la fusée
+	 * @return la largeur de la fusée en m
+	 */
+	public double largeurFusee() {
+		return (capsule.getLargeur()/CONSTANTE_MONDE);
+	}
+	/**
+	 * Méthode qui retourne le vecteur positionOrbitale de la fusée pendant l'orbite
+	 * @return le vecteur positionOrbitale de la fusée pendant le l'orbite
+	 */
+	public Vecteur getPositionOrbitale() {
+		return positionOrbitale;
+	}
+	/**
+	 * Méthode qui définit le vecteur positionOrbitale de la fusée pendant l'orbite
+	 * @param positionOrbitale le vecteur position de la fusée pendant l'orbite
+	 */
+	public void setPositionOrbitale(Vecteur positionOrbitale) {
+		this.positionOrbitale = positionOrbitale;
+	}
+	/**
+	 * Méthode qui retourne le vecteur vitesseOrbitale de la fusée pendant l'orbite
+	 * @return le vecteur vitesse de la fusée pendant l'orbite
+	 */
+	public Vecteur getVitesseOrbital() {
+		return vitesseOrbital;
+	}
+	/**
+	 * Méthode qui définit le vecteur vitesseOrbitale de la fusée pendant l'orbite
+	 * @param vitesseOrbitale le vecteur vitesse de la fusée pendant l'orbite
+	 */
+	public void setVitesseOrbital(Vecteur vitesseOrbital) {
+		this.vitesseOrbital = vitesseOrbital;
+	}
+	/**
+	 * Méthode qui retourne le vecteur accelerationOrbitale de la fusée pendant le l'orbite
+	 * @return le vecteur accélération de la fusée pendant l'orbite
+	 */
+	public Vecteur getAccelerationOrbitale() {
+		return accelerationOrbitale;
+	}
+	/**
+	 * Méthode qui définit le vecteur accelerationOrbitale de la fusée pendant l'orbite
+	 * @param acceleration le vecteur accélération de la fusée pendant l'orbite
+	 */
+	public void setAccelerationOrbitale(Vecteur accelerationOrbitale) {
+		this.accelerationOrbitale = accelerationOrbitale;
+	}
+	/**
+	 * Méthode qui permet de sélectionner une pièce quelconque à l'aide de son indice
+	 * @param indice l'indice de la pièce dans le tableau contenant toutes les pièces
+	 */
+	public void selectionnerPiece(int indice) {
+		if(indice < 3) {
+			capsule = (Capsule) listeCompletePieces[indice];
+			capsuleTemp = capsule;
+		} else {
+			if(indice < 6) {
+				reservoir = (Reservoir) listeCompletePieces[indice];
+				reservoirTemp = reservoir;
+			} else {
+				moteur = (Moteur) listeCompletePieces[indice];
+				moteurTemp = moteur;
+			}
+		}
+	} 
+	/**
+	 * Méthode qui réinitialise les valeurs de la classe aux valeurs initiales
+	 */
+	public void reinitialiserValeurs() {
+		capsuleTemp = null;
+		reservoirTemp = null;
+		moteurTemp = null;
+		capsule = (Capsule) listeCompletePieces[0];
+		reservoir = (Reservoir) listeCompletePieces[3];
+		moteur = (Moteur) listeCompletePieces[6];
+		position = new Vecteur(0, 0);
+		vitesse = new Vecteur(0, 0);
+		acceleration = new Vecteur(0, 0);
+		positionOrbitale = new Vecteur(0, 0);
+		vitesseOrbital = new Vecteur(0, 0);
+		accelerationOrbitale = new Vecteur(0, 0);
+		initialiserTableauCompletPieces();
+	}
+	/**
+	 * Méthode qui initialise le tableau contenant toutes les pieces dans la classe
+	 */
+	private void initialiserTableauCompletPieces() {
+		initialiserTabFeu(tabFeuUS, "US_FIRE");
+		initialiserTabFeu(tabFeuRUS, "RUS_FIRE");
+		initialiserTabFeu(tabFeuPRV, "PRV_FIRE");
+		listeCompletePieces[0] = new Capsule("Capsule Mercury", "USCapsule.png", "USCapsuleSquare.png", 500.0, 10000);
+		listeCompletePieces[1] = new Capsule("Capsule Vostok", "RUSCapsule.png", "RUSCapsuleSquare.png", 1000.0, 20000);
+		listeCompletePieces[2] = new Capsule("Capsule SpaceX Dragon", "PRVCapsule.png", "PRVCapsuleSquare.png", 1500.0, 30000);
+		listeCompletePieces[3] = new Reservoir("Réservoir Redstone I", "USTank.png", "USTankSquare.png", 100.0, 1000);
+		listeCompletePieces[4] = new Reservoir("Réservoir Semyorka R-7", "RUSTank.png", "RUSTankSquare.png", 200.0, 4000);
+		listeCompletePieces[5] = new Reservoir("Réservoir Falcon 9","PRVTank.png" ,"PRVTankSquare.png", 300.0, 8000);
+		listeCompletePieces[6] = new Moteur("Moteur Rocketdyne A-7", "USEngine.png", "USEngineSquare.png", 250, 40000, 4, tabFeuUS);
+		listeCompletePieces[7] = new Moteur("Moteur RD-107A x3", "RUSEngine.png", "RUSEngineSquare.png", 350, 80000, 6, tabFeuRUS);
+		listeCompletePieces[8] = new Moteur("Moteur Merlin", "PRVEngine.png", "PRVEngineSquare.png", 450, 1600000, 8, tabFeuPRV);
+	
+	}
+	/**
+	 * Méthode qui initialise un tableau de feu avec les trois images ayant le préfixe entré
+	 * @param tabFeu le tableau des images de feu que l'on veut initialiser
+	 * @param prefixe le préfixe des images que l'on veut mettre dans le tableau
+	 */
+	private void initialiserTabFeu(Image[] tabFeu, String prefixe) {
+		for(int k = 0; k < 3; k++) {
+			URL urlImage = getClass().getClassLoader().getResource(prefixe + k + ".png");
+
+			if(urlImage == null) {
+				System.out.println("L'image " + prefixe + k +" est introuvable");
+			}
+
+			try {
+				tabFeu[k] = ImageIO.read(urlImage);
+			} catch (IOException e) {
+				System.out.println("Il est impossible de lire le fichier" + prefixe + k);
+			}
+		}
+	}
+}

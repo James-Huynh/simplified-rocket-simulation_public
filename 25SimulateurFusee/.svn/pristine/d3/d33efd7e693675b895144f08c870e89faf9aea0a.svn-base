@@ -1,0 +1,89 @@
+package trajectoire;
+
+import java.awt.Point;
+import java.awt.geom.Path2D;
+import java.util.ArrayList;
+
+import moteurphysique.MoteurPhysiqueOrbite;
+import vecteur.Vecteur;
+/**
+ * Classe qui s'occuppe de calculer les points de la trajectoire
+ * @author Thomas Corbeil
+ *
+ */
+public class CalculsTrajectoire {
+	private final static double MASSE_TERRE = 5.972e24;
+	private final static double DELTA_T = 0.01;
+	private final static double ANGLE_TOTAL = 360.0;
+	/**
+	 * Méthode qui calcule et retourne un ArrayList de points représentants la trajectoire
+	 * @param masse la masse de l'objet
+	 * @param position la postion de l'objet
+	 * @param vitesse la vitesse de lobjet
+	 * @param nCalculsParPoint le nombre de calculs physiques entres chaque points
+	 * @return un Array de points représentant la trajectoire
+	 */
+	public static ArrayList<Point.Double> calculerTrajectoire(double masse, Vecteur position, Vecteur vitesse, int nCalculsParPoint) {
+		Vecteur acceleration = new Vecteur(0, 0);
+		Vecteur vitesseLocale = new Vecteur(vitesse.getX(), vitesse.getY());
+		Vecteur positionLocale = new Vecteur(position.getX(), position.getY());
+		ArrayList<Point.Double> listePoints = new ArrayList<Point.Double>();
+		Vecteur anciennePositionLocale = new Vecteur();
+		double angleTotal = 0.0;
+		
+		listePoints.add(new Point.Double(positionLocale.getX(), positionLocale.getY()));
+		
+		do {
+
+			anciennePositionLocale.setXY(positionLocale.getX(), positionLocale.getY());
+
+			for (int k = 0; k < nCalculsParPoint; k++) {
+				Vecteur forceGrav = MoteurPhysiqueOrbite.forceGravitationnelle(masse, MASSE_TERRE, positionLocale);
+				Vecteur sommeForces = MoteurPhysiqueOrbite.sommeForces(forceGrav, new Vecteur(0, 0));
+				MoteurPhysiqueOrbite.unCalculOrbite(sommeForces, positionLocale, vitesseLocale, acceleration, masse, DELTA_T);
+			}
+
+			listePoints.add(new Point.Double(positionLocale.getX(), positionLocale.getY()));
+			
+			angleTotal += angleEntreDeuxVecteurs(positionLocale, anciennePositionLocale);
+
+		} while(angleTotal < (ANGLE_TOTAL));
+		
+		return listePoints;
+	}
+	/**
+	 * Méthode qui créée et retourne un Path2D représentant la trajectoire
+	 * @param listePoints un ArrraList de points représentant la trajectoire
+	 * @return un Path2D représentant la trajetoire
+	 */
+	public static Path2D.Double creerTrajectoire(ArrayList<Point.Double> listePoints) {
+		Path2D.Double trajectoire = new Path2D.Double();
+		int longueurListe = listePoints.size();
+		
+		trajectoire.moveTo(listePoints.get(0).getX(), listePoints.get(0).getY());
+		
+		for(int k = 0;k < longueurListe; k++) {
+			trajectoire.lineTo(listePoints.get(k).getX(), listePoints.get(k).getY());
+		}
+		
+		return trajectoire;
+	}
+	/**
+	 * Méthode qui fait le produit vectoriel entre deux vecteurs
+	 * @param v1 le premier vecteur
+	 * @param v2 le second vecteur
+	 * @return le produit vectoriel de v1 et v2
+	 */
+	private static double dotProduct(Vecteur v1, Vecteur v2) {
+		return (v1.getX() * v2.getX()) + (v1.getY() * v2.getY());
+	}
+	/**
+	 * Méthode qui calcule l'angle entre deux vecteurs
+	 * @param v1 le premier vecteur
+	 * @param v2 le deuxième vecteur
+	 * @return l'angle entre deux vecteurs
+	 */
+	private static double angleEntreDeuxVecteurs(Vecteur v1, Vecteur v2) {
+		return Math.toDegrees(Math.acos(dotProduct(v1, v2)/(v1.module() * v2.module())));
+	}
+}

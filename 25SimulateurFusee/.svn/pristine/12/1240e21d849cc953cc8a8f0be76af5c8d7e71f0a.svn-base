@@ -1,0 +1,113 @@
+package pieces;
+
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
+/**
+ * La classe représente un moteur de fusée
+ * @author Thomas Corbeil
+ *
+ */
+public class Moteur extends Pieces {
+	private double poussee, consommationCarburant;
+	private int indiceFeu = 0;
+	private Image[] tabFeu; 
+	private Image feuActif;
+	private final double CONSTANTE_MONDE = 10.0;
+	private boolean dessinerFeu;
+	
+	
+	/**
+	 * Constructeur prenant en compte le nom de l'image de la pièce, sa masse, sa poussée, sa consommation de carburant et le tableau des image du feu
+	 * @param nomImage le nom du fichier de l'image de la pièce
+	 * @param masse la masse de la pièce en kg
+	 * @param poussee la force de poussée du moteur en N
+	 * @param consomationCarburant la consommation de carburant du moteur en L/s
+	 * @param tabFeu le tableaU des images représentant le feu du moteur (Le tableau ne doit que contenir trois images);
+	 */
+	public Moteur(String nomPiece, String nomImage, String nomImageCarre, double masse, double poussee, double consommationCarburant, Image[] tabFeu) {
+		super(nomPiece, nomImage, nomImageCarre, masse);
+		this.poussee = poussee;
+		this.consommationCarburant = consommationCarburant;
+		this.tabFeu = tabFeu;
+		feuActif = tabFeu[indiceFeu];
+	}
+	
+	public void dessiner(Graphics2D g2d, AffineTransform mat, double rotation, double x, double y, double centreRotX, double centreRotY) {
+		Point2D.Double point = new Point2D.Double();
+		AffineTransform matOriginale = g2d.getTransform();
+		
+		super.dessiner(g2d, mat, rotation, x, y, centreRotX, centreRotY);
+		
+		if(dessinerFeu) {
+			Rectangle2D.Double rectImageReelle = new Rectangle2D.Double(x, y, feuActif.getWidth(null)/CONSTANTE_MONDE, feuActif.getHeight(null)/CONSTANTE_MONDE);
+			Shape rectTransfo = mat.createTransformedShape(rectImageReelle);
+			Rectangle2D rectCoordTransfo = rectTransfo.getBounds2D();
+			Image imageADessiner = feuActif.getScaledInstance((int) rectCoordTransfo.getWidth(), (int) rectCoordTransfo.getHeight(), Image.SCALE_SMOOTH);
+			point.setLocation(centreRotX, centreRotY);
+			mat.transform(point, point);
+			g2d.rotate(Math.toRadians(rotation), point.getX(), point.getY());
+			g2d.drawImage(imageADessiner, (int) rectCoordTransfo.getX(), (int) (rectCoordTransfo.getY() + rectCoordTransfo.getHeight()), null);
+			g2d.setTransform(matOriginale);
+		}
+		
+	}
+	//Javadoc déja générée
+	public int verifierTypePiece() {
+		return 3;
+	}
+	/**
+	 * Setter qui assigne une poussée au moteur
+	 * @param poussee la force de poussée du moteur en N
+	 */
+	public void setPoussee(double poussee) {
+		this.poussee = poussee;
+	}
+	/**
+	 * Getter qui retourne la poussée du moteur
+	 * @return la force de poussée du moteur en N
+	 */
+	public double getPoussee() {
+		return poussee;
+	}  
+	/**
+	 * Setter qui assigne une consommation de carburant au moteur
+	 * @param consommationCarburant la consommation de carburant du moteur en L/s
+	 */
+	public void setConsommationCarburant(double consommationCarburant) {
+		this.consommationCarburant = consommationCarburant;
+	}
+	/**
+	 * Getter qui retourne la consommation de carburant du moteur
+	 * @return la consommation de carburant du moteur en L/s
+	 */
+	public double getConsommationCarburant() {
+		return consommationCarburant;
+	}
+	/**
+	 * Getter qui retourne l'image du feu du moteur active
+	 * @return l'image du feu du moteur active
+	 */
+	public Image getFeuActif() {
+		return feuActif;
+	}
+	/**
+	 * Setter qui définit la variable dessinerFeu
+	 * @param dessinerFeu
+	 */
+	public void setDessinerFeu(boolean dessinerFeu) {
+		this.dessinerFeu = dessinerFeu;
+	}
+	/**
+	 * Méthode qui passe à la prochaine image de feu du tableau
+	 */
+	public void prochainFeuActif() {
+		indiceFeu ++;
+		feuActif = tabFeu[indiceFeu % 3];
+	}
+	
+}

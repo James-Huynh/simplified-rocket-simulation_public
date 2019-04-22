@@ -1,0 +1,17 @@
+package ballondessinable;
+
+import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+
+import interfaces.Dessinable;
+
+public class BallonReservoir extends BallonGenerique implements Dessinable {
+
+	@Override
+	public void dessiner(Graphics2D g2d, AffineTransform mat, double rotation, double x, double y, double centreRotX, double centreRotY) {
+		
+		
+	}
+	
+
+}

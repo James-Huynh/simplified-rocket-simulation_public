@@ -1,0 +1,116 @@
+package ballondessinable;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+
+import interfaces.DessinableBallon;
+
+public class BallonGenerique implements DessinableBallon {
+	private Color couleurBallon, couleurTexte, couleurContour = Color.BLACK;
+	private double masse;
+	private int distanceInterTexte = 20, positionXInitialeTxt, positionYInitialeTxt;
+	private Rectangle2D.Double rectangleBallon;
+	private String nomPiece, txtNom, txtMasse;
+
+
+	public BallonGenerique (String nom, double masse) {
+		this.nomPiece = nom;
+		this.masse = masse;
+
+	}
+
+	public void dessinerBallon(Graphics2D g2d, int x, int y, int longueur, int hauteur) {
+		couleurBallon = new Color(255, 255, 0, 200);
+		couleurTexte = new Color(70, 0, 165, 255);
+		rectangleBallon = new Rectangle2D.Double(x, y, longueur, hauteur);
+		positionXInitialeTxt = x + 5;
+		positionYInitialeTxt = y + 15;
+
+		g2d.setColor(getCouleurBallon());
+
+		g2d.fill(getRectangleBallon());
+		g2d.setColor(getCouleurContour());
+		g2d.setStroke(new BasicStroke(1));
+		g2d.draw(getRectangleBallon());
+	}
+
+	public void creerTexte() {
+		txtNom = "Nom: " + nomPiece;
+		txtMasse = "Masse (kg): " + masse;
+	}
+
+	public Color getCouleurBallon() {
+		return couleurBallon;
+	}
+
+	public void setCouleurBallon(Color couleurBallon) {
+		this.couleurBallon = couleurBallon;
+	}
+
+	public Rectangle2D.Double getRectangleBallon() {
+		return rectangleBallon;
+	}
+
+	public void setRectangleBallon(Rectangle2D.Double rectangleBallon) {
+		this.rectangleBallon = rectangleBallon;
+	}
+
+	public String getTxtNom() {
+		return txtNom;
+	}
+
+	public void setTxtNom(String txtNom) {
+		this.txtNom = txtNom;
+	}
+
+	public String getTxtMasse() {
+		return txtMasse;
+	}
+
+	public void setTxtMasse(String txtMasse) {
+		this.txtMasse = txtMasse;
+	}
+
+	public int getDistanceInterTexte() {
+		return distanceInterTexte;
+	}
+
+	public void setDistanceInterTexte(int distanceInterTexte) {
+		this.distanceInterTexte = distanceInterTexte;
+	}
+
+	public Color getCouleurTexte() {
+		return couleurTexte;
+	}
+
+	public void setCouleurTexte(Color couleurTexte) {
+		this.couleurTexte = couleurTexte;
+	}
+
+	public Color getCouleurContour() {
+		return couleurContour;
+	}
+
+	public void setCouleurContour(Color couleurContour) {
+		this.couleurContour = couleurContour;
+	}
+
+	public int getPositionXInitialeTxt() {
+		return positionXInitialeTxt;
+	}
+
+	public void setPositionXInitialeTxt(int positionXInitialeTxt) {
+		this.positionXInitialeTxt = positionXInitialeTxt;
+	}
+
+	public int getPositionYInitialeTxt() {
+		return positionYInitialeTxt;
+	}
+
+	public void setPositionYInitialeTxt(int positionYInitialeTxt) {
+		this.positionYInitialeTxt = positionYInitialeTxt;
+	}
+
+}

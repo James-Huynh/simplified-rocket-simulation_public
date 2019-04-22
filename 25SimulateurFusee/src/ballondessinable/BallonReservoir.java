@@ -1,0 +1,63 @@
+package ballondessinable;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+
+import pieces.Reservoir;
+
+/**
+ * La classe BallonMoteur dérivant de BallonGenerique gère un ballon informatif à l'intention des moteurs
+ * @author James Huynh
+ *
+ */
+public class BallonReservoir extends BallonGenerique {
+
+	private double carburant;
+	private String txtCarburant;
+	private int positionXInitialeTxt, positionYInitialeTxt, positionYTxt, distanceInterTexte;
+
+	/**
+	 * Le constructeur pour les ballons spécifiques aux réservoirs
+	 * @param reservoir Le réservoir associé
+	 * @param longueurBallon La longueur du ballon
+	 * @param hauteurBallon La hauteur de ballon
+	 */
+	public BallonReservoir(Reservoir reservoir, int longueurBallon, int hauteurBallon) {
+		super(reservoir.getNomPiece(), reservoir.getMasse());
+		this.carburant = reservoir.getCarburant();
+		this.distanceInterTexte = getDistanceInterTexte();
+		
+		creerTexteReservoir();
+	}
+	
+	/**
+	 * Méthode pour dessiner un ballon adapté pour un réservoir
+	 */
+	public void dessinerBallon(Graphics2D g2d, int x, int y, int longueur, int hauteur) {
+		super.dessinerBallon(g2d, x, y, longueur, hauteur);
+		
+		positionXInitialeTxt = getPositionXInitialeTxt();
+		positionYInitialeTxt = getPositionYInitialeTxt();
+
+		Color couleurInitiale = g2d.getColor();
+
+		g2d.setColor(getCouleurTexte());
+		positionYTxt = positionYInitialeTxt;
+		g2d.drawString(getTxtNom(), positionXInitialeTxt, positionYTxt);
+		positionYTxt += distanceInterTexte;
+		g2d.drawString(getTxtMasse(), positionXInitialeTxt, positionYTxt);
+		positionYTxt += distanceInterTexte;
+		g2d.drawString(txtCarburant, positionXInitialeTxt, positionYTxt);
+
+		g2d.setColor(couleurInitiale);
+	}
+
+	/**
+	 * Méthode pour créer le texte spécifique aux réservoirs
+	 */
+	private void creerTexteReservoir() {
+		creerTexte();
+		txtCarburant = ("Carburant (L): " + carburant);
+	}
+
+}

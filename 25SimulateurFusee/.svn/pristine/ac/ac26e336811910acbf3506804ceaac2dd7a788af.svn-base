@@ -1,0 +1,13 @@
+package ballondessinable;
+
+public class BallonMoteur extends BallonGenerique {
+
+	public BallonMoteur(String nom, double masse) {
+		super(nom, masse);
+		// TODO Auto-generated constructor stub
+	}
+
+	
+	
+
+}

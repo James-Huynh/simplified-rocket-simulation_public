@@ -1,0 +1,61 @@
+package pieces;
+/**
+ * La classe représente un réservoir de fusée
+ * @author Thomas Corbeil
+ *
+ */
+public class Reservoir extends Pieces {
+	private double carburant, carburantRestant;
+	/**
+	 * Constructeur prenant en compte le nom de l'image de la pièce, sa masse et sa quantité maximale de carburant
+	 * @param nomPiece le nom de la pièce
+	 * @param nomImage le nom du fichier de l'image de la pièce
+	 * @param masse la masse de la pièce en kg
+	 * @param carburant la quantité maximale de carburant du réservoir
+	 */
+	public Reservoir(String nomPiece, String nomImage, String nomImageCarre, double masse, double carburant) {
+		super(nomPiece, nomImage, nomImageCarre, masse);
+		this.carburant = carburant;
+		this.carburantRestant = carburant;
+	}
+	//Javadoc déja générée 
+	public int verifierTypePiece() {
+		return 2;
+	}
+	/**
+	 * Setter qui assigne une quantité maximale de carburant à la capsule
+	 * @param carburant la quantité maximale de carburant de la capsule en L
+	 */
+	public void setCarburant(double carburant) {
+		this.carburant = carburant;
+	}
+	/**
+	 * Getter qui retourne la quantité maximale de carburant de la capsule
+	 * @return la quantité maximale de carburant de la capsule en L
+	 */
+	public double getCarburant() {
+		return carburant;
+	}
+	/**
+	 * Setter qui assigne une quantité de carburant à la capsule
+	 * @param carburant la quantité de carburant de la capsule en L
+	 */
+	public void setCarburantRestant(double carburantRestant) {
+		this.carburantRestant = carburantRestant;
+	}	
+	/**
+	 * Getter qui retourne la quantité de carburant de la capsule
+	 * @return la quantitée de carburant de la capsule en L
+	 */
+	public double getCarburantRestant() {
+		return carburantRestant;
+	}
+	/**
+	 * Getter qui retourne la masse du réservoir incluant celle du carburant
+	 * @return la masse du réservoir et du craburant en kg
+	 */
+	public double getMasseAvecCarburant() {
+		return getMasse() + carburantRestant * 1.5; //temporaire voir sur internet
+	}
+
+}

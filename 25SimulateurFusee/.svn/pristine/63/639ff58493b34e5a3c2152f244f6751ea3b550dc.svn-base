@@ -1,0 +1,53 @@
+package pieces;
+/**
+ * La classe représente un  moteur de fusée
+ * @author Thomas Corbeil
+ *
+ */
+public class Moteur extends Pieces {
+	double poussee, consommationCarburant;
+	/**
+	 * onstructeur prenant en compte le nom de l'image de la pièce, sa masse, sa poussée et sa consommation de carburant
+	 * @param nomImage le nom du fichier de l'image de la pièce
+	 * @param masse la masse de la pièce en kg
+	 * @param poussee la force de poussée du moteur en N
+	 * @param consomationCarburant la consommation de carburant du moteur en L/s
+	 */
+	public Moteur(String nomImage, String nomImageCarre, double masse, double poussee, double consommationCarburant) {
+		super(nomImage, nomImageCarre, masse);
+		this.poussee = poussee;
+		this.consommationCarburant = consommationCarburant;
+	}
+	//Javadoc déja générée
+	public int verifierTypePiece() {
+		return 3;
+	}
+	/**
+	 * Setter qui assigne une poussée au moteur
+	 * @param poussee la force de poussée du moteur en N
+	 */
+	public void setPoussee(double poussee) {
+		this.poussee = poussee;
+	}
+	/**
+	 * Getter qui retourne la poussée du moteur
+	 * @return la force de poussée du moteur en N
+	 */
+	public double getPoussee() {
+		return poussee;
+	}  
+	/**
+	 * Setter qui assigne une consommation de carburant au moteur
+	 * @param consommationCarburant la consommation de carburant du moteur en L/s
+	 */
+	public void setConsommationCarburant(double consommationCarburant) {
+		this.consommationCarburant = consommationCarburant;
+	}
+	/**
+	 * Getter qui retourne la consommation de carburant du moteur
+	 * @return la consommation de carburant du moteur en L/s
+	 */
+	public double getConsommationCarburant() {
+		return consommationCarburant;
+	}
+}

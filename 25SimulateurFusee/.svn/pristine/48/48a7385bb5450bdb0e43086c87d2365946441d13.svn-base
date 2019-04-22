@@ -1,0 +1,250 @@
+package zonededessin;
+
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+
+import javax.swing.JPanel;
+import javax.swing.event.EventListenerList;
+
+import ecouteurspersonnalises.MettreAJourDonneesVolListener;
+import ecouteurspersonnalises.PasserAuVolOrbitalListener;
+import modelephysique.ModelePhysique;
+import moteurphysique.MoteurPhysiqueVol;
+import pieces.EnsemblePieces;
+import vecteur.Vecteur;
+/**
+ * La classe zone de dessin décollage représente un dessin de la fusée tout au long du décollage
+ * @author Thomas Corbeil
+ *
+ */
+public class ZoneDessinDecollage extends JPanel implements Runnable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -668584627745721839L;
+	private final EventListenerList OBJETS_ENREGISTRES = new EventListenerList();
+	private EnsemblePieces fusee;
+	private boolean premiereFois = true;
+	private boolean enCoursDAnimation = false;
+	private ModelePhysique modele;
+	private AffineTransform matMC;
+	private double uniteeReellePanelY;
+	private double hauteurCapsule;
+	private double hauteurReservoir;
+	private double hauteurMoteur;
+	private double largeurFusee;
+	private double longueurFusee;
+	private double poussee;
+	private Vecteur position, vitesse, acceleration;
+	private double inclinaison = 90;
+	private double pourcentagePoussee = 1.0;
+	private int tempsSleep = 5;
+	private Color ciel = new Color(73, 156, 255);
+	private final double ROUGE_CIEL = 73;
+	private final double VERT_CIEL = 156;
+	private final double BLEU_CIEL = 255;
+	private final double LARGEUR_MONDE = 12;
+	private final double CONSTANTE_MONDE = 10.0;
+	private final double DELTAT = 0.01;
+	private final double CONSTANTE_REDRESSEMENT = 90.0;
+	private final double CONSTANTE_ALTITUDE = 100000.0;
+	/**
+	 * Create the panel.
+	 * @param object 
+	 */
+	public ZoneDessinDecollage(EnsemblePieces fusee) {
+		setBackground(ciel);
+		this.fusee = fusee;
+	}
+	/**
+	 * Méthode qui s'occupe de dessinner les divers éléments de la zone de dessin de décollage
+	 * @param g le contexte graphique
+	 */
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		Graphics2D g2d = (Graphics2D) g;	
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+
+		if(premiereFois) {
+			acceleration = new Vecteur(0, 0);
+			vitesse = new Vecteur(0, 0);
+			position = new Vecteur(0, 0);
+			ModelePhysique modeleTemp = new ModelePhysique(getWidth(), getHeight(), 0, 0, LARGEUR_MONDE);
+			uniteeReellePanelY = modeleTemp.getHautUnitesReelles();
+			premiereFois = false;
+		}
+		
+		setBackground(ciel);
+		modele = new ModelePhysique(getWidth(), getHeight(), (LARGEUR_MONDE/2) - (largeurFusee/2), position.getY() + (uniteeReellePanelY/2) - (longueurFusee/2), LARGEUR_MONDE);
+		matMC = modele.getMatMC();
+		matMC.scale(1, -1);
+
+		g2d.setColor(Color.DARK_GRAY);
+		Rectangle2D.Double rectBase = new Rectangle2D.Double(-(LARGEUR_MONDE/2) + largeurFusee/2, -1.5, LARGEUR_MONDE, 1.8);
+		Shape shapeBase = matMC.createTransformedShape(rectBase);
+		g2d.fill(shapeBase);
+
+		creerLigneDeCent(matMC, g2d);
+
+		fusee.getCapsule().dessiner(g2d, matMC, inclinaison - CONSTANTE_REDRESSEMENT, 0, position.getY() - (hauteurCapsule/CONSTANTE_MONDE),  largeurFusee/2, position.getY() - (longueurFusee/2));
+		fusee.getReservoir().dessiner(g2d, matMC, inclinaison - CONSTANTE_REDRESSEMENT, 0, position.getY()  - (hauteurReservoir/CONSTANTE_MONDE) - (hauteurCapsule/CONSTANTE_MONDE), largeurFusee/2, position.getY() - (longueurFusee/2));
+		fusee.getMoteur().dessiner(g2d, matMC, inclinaison - CONSTANTE_REDRESSEMENT, 0, position.getY()  - (hauteurReservoir/CONSTANTE_MONDE) - (hauteurCapsule/CONSTANTE_MONDE) - (hauteurMoteur/CONSTANTE_MONDE),largeurFusee/2, position.getY() - (longueurFusee/2));
+	}
+	/**
+	 * Méthode qui s'occupe de faire rouler le thread responsable de l'animation
+	 */
+	@Override
+	public void run() {
+		while(enCoursDAnimation) {
+			if(!fusee.reservoirVide()) {
+				MoteurPhysiqueVol.unCalculDecollage(position, vitesse, acceleration, poussee * pourcentagePoussee, fusee.getMasseAvecCarburant(), DELTAT, inclinaison);
+			} else {
+				MoteurPhysiqueVol.unCalculDecollage(position, vitesse, acceleration, 0.0, fusee.getMasseAvecCarburant(), DELTAT, inclinaison);
+			}
+			
+			double pourcentageAltitude = (1.0 - (position.getX())/CONSTANTE_ALTITUDE);
+			if (pourcentageAltitude > 0) {
+				ciel = new Color((int) (pourcentageAltitude * ROUGE_CIEL), (int) (pourcentageAltitude * VERT_CIEL), (int) (pourcentageAltitude * BLEU_CIEL));
+			} else {
+				ciel = new Color( 0, 0, 0);
+			}
+			fusee.consommerCarburant(DELTAT, pourcentagePoussee);
+			leverEvenDonneesVol();
+			repaint();
+			System.out.println(position);
+
+			if(position.getY() > 100000) {
+				passerAuVolOrbital();
+			}
+			
+			try {
+				Thread.sleep(tempsSleep);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	/**
+	 * Méthode qui permet de passer à la phase orbitale et d'interrompre l'animation de la phase de décollage
+	 */
+	private void passerAuVolOrbital() {
+		enCoursDAnimation = false;
+		fusee.setVitesseOrbital(new Vecteur(vitesse.getX(), vitesse.getY()));
+		leverEvenVolOrbital();
+	}
+	/**
+	 * Méthode qui s'occupe de lancer le thread s'occupant d'animaer la zone et de faire les calculs physiques
+	 */
+	public void lancerLeDecollage() {
+		if (!enCoursDAnimation) { 
+			Thread proc = new Thread(this);
+			enCoursDAnimation = true;
+			proc.start();
+		}
+	}
+	/**
+	 * Méthode qui s'occupe de créer de lignes indiquant chaque centaine de mètres
+	 * @param matMC la matrice de transformation monde vers objet
+	 * @param g2d le contexte graphique dans lequel on dessine les lignes
+	 */
+	public void creerLigneDeCent(AffineTransform matMC, Graphics2D g2d) { 
+		for(int k = 0; k <= 100000; k = k + 100) {
+			Rectangle2D.Double rectCent = new Rectangle2D.Double(-(LARGEUR_MONDE/2) + largeurFusee/2, k, LARGEUR_MONDE, 0.1);
+			Shape shapeCent = matMC.createTransformedShape(rectCent);
+			g2d.fill(shapeCent);
+		}
+	}
+	/**
+	 * Méthode s'occuppant d'ajouter les listener passerAuVolOrbital à une collection de listeners
+	 * @param obj le listener que l'on veut ajouter à la collection
+	 */
+	public void addPasserAuVolOrbitalListener (PasserAuVolOrbitalListener obj) {
+		OBJETS_ENREGISTRES.add(PasserAuVolOrbitalListener.class, obj);
+	}
+	/**
+	 * Méthode qui lève l'évenement des listeners permettants de passer au vol orbital
+	 */
+	private void leverEvenVolOrbital() {
+		for (PasserAuVolOrbitalListener ecout: OBJETS_ENREGISTRES.getListeners(PasserAuVolOrbitalListener.class)) {
+			ecout.passerAuVolOrbital();
+		}
+	}
+	/**
+	 * Méthode s'occuppant d'ajouter les listener mettreAJourDonneesVolListener à une collection de listeners
+	 * @param obj le listener que l'on veut ajouter à la collection
+	 */
+	public void addMettreAJourDonneesVolListener (MettreAJourDonneesVolListener obj) {
+		OBJETS_ENREGISTRES.add(MettreAJourDonneesVolListener.class, obj);
+	}
+	/**
+	 * Méthode qui lève l'évenement des listeners permettants de mettre a jour les données de vol du décollage
+	 */
+	private void leverEvenDonneesVol() {
+		for (MettreAJourDonneesVolListener ecout: OBJETS_ENREGISTRES.getListeners(MettreAJourDonneesVolListener.class)) {
+			ecout.mettreAJourDonneesVol();
+		}
+	}
+	/**
+	 * Méthode qui définit l'inclinaison de la fusée
+	 * @param inclinaison l'inclinaison de la fusée en degrés
+	 */
+	public void setInclinaison(double inclinaison) {
+		this.inclinaison = inclinaison;
+	}
+	/**
+	 * Méthode qui définit le pourcentage de poussée de la fusée
+	 * @param pourcentagePoussee le pourcentage de poussée de la fusée
+	 */
+	public void setPourcentagePousse(int pourcentagePoussee) {
+		this.pourcentagePoussee = pourcentagePoussee/100.0;
+	}
+	/**
+	 * Méthode qui retourne le vecteur position de la fusée pendant le décollage
+	 * @return le vecteur position de la fusée pendant le décollage
+	 */
+	public Vecteur getPosition() {
+		return position;
+	}
+	/**
+	 * Méthode qui retourne le vecteur vitesse de la fusée pendant le décollage
+	 * @return le vecteur vitesse de la fusée pendant le décollage
+	 */
+	public Vecteur getVitesse() {
+		return vitesse;
+	}
+	/**
+	 * Méthode qui retourne le vecteur accélération de la fusée pendant le décollage
+	 * @return le vecteur accélération de la fusée pendant le décollage
+	 */
+	public Vecteur getAcceleration() {
+		return acceleration;
+	}
+	/**
+	 * Méthode qui retourne le vecteur poussée de la fusée pendant le décollage
+	 * @return le vecteur poussée de la fusée pendant le décollage
+	 */
+	public Vecteur getPoussee() {
+		 return MoteurPhysiqueVol.calculerPousseeDecollage(poussee, inclinaison);
+	}
+	/**
+	 * Méthode qui met à jour les valeur de la fusée
+	 */
+	public void initialiserValeurs() {
+		hauteurCapsule = fusee.getCapsule().getHauteur();
+		hauteurReservoir = fusee.getReservoir().getHauteur();
+		hauteurMoteur = fusee.getMoteur().getHauteur();
+		largeurFusee = fusee.largeurFusee();
+		longueurFusee = fusee.longueurFusee();
+		poussee = fusee.getPousseeFusee();
+		acceleration = new Vecteur(0, 0);
+		vitesse = new Vecteur(0, 0);
+		position = new Vecteur(0, longueurFusee + 0.3);
+		repaint();
+	}
+}

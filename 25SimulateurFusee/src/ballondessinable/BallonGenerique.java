@@ -1,0 +1,104 @@
+package ballondessinable;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+
+import interfaces.DessinableBallon;
+
+/**
+ * La classe BallonGenerique représente un ballon général à l'intention d'une pièce de la fusée
+ * @author James Huynh
+ *
+ */
+public class BallonGenerique implements DessinableBallon {
+	private Color couleurBallon, couleurTexte, couleurContour = Color.BLACK;
+	private double masse;
+	private int distanceInterTexte = 20, positionXInitialeTxt, positionYInitialeTxt;
+	private Rectangle2D.Double rectangleBallon;
+	private String nomPiece, txtNom, txtMasse;
+
+	/**
+	 * Le constructeur pour un ballon générique
+	 * @param nom Le nom approprié à la pièce
+	 * @param masse La masse appropriée à la pièce
+	 */
+	public BallonGenerique (String nom, double masse) {
+		this.nomPiece = nom;
+		this.masse = masse;
+	}
+	
+	//JavaDoc déjà générée
+	public void dessinerBallon(Graphics2D g2d, int x, int y, int longueur, int hauteur) {
+		couleurBallon = new Color(255, 255, 0, 200);
+		couleurTexte = new Color(70, 0, 165, 255);
+		rectangleBallon = new Rectangle2D.Double(x, y, longueur, hauteur);
+		positionXInitialeTxt = x + 5;
+		positionYInitialeTxt = y + 15;
+
+		g2d.setColor(couleurBallon);
+
+		g2d.fill(rectangleBallon);
+		g2d.setColor(couleurContour);
+		g2d.setStroke(new BasicStroke(1));
+		g2d.draw(rectangleBallon);
+	}
+
+	/**
+	 * Méthode qui initialise le texte générique du ballon
+	 */
+	public void creerTexte() {
+		txtNom = "Nom: " + nomPiece;
+		txtMasse = "Masse (kg): " + masse;
+	}
+
+	/**
+	 * Méthode qui retourne le texte du nom de la pièce
+	 * @return Le nom de la pièce
+	 */
+	public String getTxtNom() {
+		return txtNom;
+	}
+
+	/**
+	 * Méthode qui retourne le texte de la masse
+	 * @return Le texte pour la masse
+	 */
+	public String getTxtMasse() {
+		return txtMasse;
+	}
+
+	/**
+	 * Méthode qui retourne la distance entre les lignes des textes
+	 * @return La distance entre les textes
+	 */
+	public int getDistanceInterTexte() {
+		return distanceInterTexte;
+	}
+
+	/**
+	 * Méthode qui retourne la couleur du texte du ballon 
+	 * @return La couleur du texte
+	 */
+	public Color getCouleurTexte() {
+		return couleurTexte;
+	}
+
+	/**
+	 * Méthode qui retourne la position des textes sur l'axe des abscisses
+	 * @return la position (pixel) en x
+	 */
+	public int getPositionXInitialeTxt() {
+		return positionXInitialeTxt;
+	}
+
+	/**
+	 * Méthode qui retourne la position des textes sur l'axe des ordonnées
+	 * @return la position (pixel) en y
+	 */
+	public int getPositionYInitialeTxt() {
+		return positionYInitialeTxt;
+	}
+
+}

@@ -1,0 +1,922 @@
+package fenetresimulateur;
+
+import java.awt.Color;
+import java.awt.EventQueue;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JSlider;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import ecouteurspersonnalises.MettreAJourDonneesVolListener;
+import ecouteurspersonnalises.MettreAJourListener;
+import ecouteurspersonnalises.PasserAuVolOrbitalListener;
+import ecouteurspersonnalises.SelectionPiecesListener;
+import menuoptionapplication.ConceptsScientifiques;
+import menuoptionapplication.GuideUtilisation;
+import pieces.EnsemblePieces;
+import zonededessin.ZoneDessinAssemblage;
+import zonededessin.ZoneDessinDecollage;
+import zonededessin.ZoneDessinOrbitale;
+import zonededessin.ZoneDessinMiniMap;
+/**
+ * La fenêtre principale du simulateur de fusée
+ * @author Thomas Corbeil
+ * @author James Huynh
+ *
+ */
+// tick
+public class FenetreSimulateur extends JFrame {
+
+	private static final long serialVersionUID = -8972431796574362590L;
+
+	private EnsemblePieces ensemblePieces = new EnsemblePieces();
+	
+	private JPanel contentPane;
+	private ZoneDessinOrbitale zoneDessinOrbite;
+	private ZoneDessinDecollage zoneDessinDecollage;
+	private ZoneDessinAssemblage zoneDessinAssemblage;
+	private JButton btnDecollage;
+	private JLabel lblPhaseDecollage;
+	private JButton btnLancerLaFusee;
+	private JLabel lblPhaseVol;
+	private JMenuBar menuBar;
+	private JLabel lblInclinaison;
+	private JSlider sliderAngle;
+	private JPanel panelDonneesVolE;
+	private JLabel lblMasseDecollage;
+	private JLabel lblAffichageMasseDecollage;
+	private JPanel panelDonneesVolD;
+	private JLabel lblPousseEnX;
+	private JLabel lblPousseEnY;
+	private JLabel lblAffichagePousseeX;
+	private JLabel lblAffichagePousseeY;
+	private JPanel panelDonneesVolC;
+	private JLabel lblAltitude;
+	private JLabel lblAffichageAltitude;
+	private JPanel panelDonneesVolB;
+	private JLabel lblAccelerationEnX;
+	private JLabel lblAccelerationEnY;
+	private JLabel lblAffichageAccX;
+	private JLabel lblAffichageAccY;
+	private JPanel panelDonneesVolA;
+	private JProgressBar progressBarPoussee;
+	private JLabel lblPousse;
+	private JLabel lblCarburanRestant;
+	private JProgressBar progressBarCarburantRestant;
+	private JPanel panelStatistiquesFusee;
+	private JLabel lblMasse;
+	private JLabel lblCarburant;
+	private JLabel lblPousseMaximalekn;
+	private JLabel lblAffichagePoussee;
+	private JLabel lblAffichageCarburant;
+	private JLabel lblAffichageMasse;
+	private JPanel panelVerificationElements;
+	private JLabel lblCapsulePresente;
+	private JLabel lblReservoirPresent;
+	private JLabel lblMoteurPresent;
+	private JPanel panelIndicateurAssemblage;
+	private JLabel lblPhaseAssemblage;
+	private JPanel panelIndicateurDecollage;
+	private JPanel panelIndicateurVolOrbital;
+	private JButton btnLeft;
+	private JButton btnUp;
+	private JButton btnRight;
+	private JButton btnDown;
+	private JSlider sliderPoussee;
+	private JLabel lblPoussee;
+	private JPanel panelDonneesVolF;
+	private JLabel lblVitesseX;
+	private JLabel lblAffichageVitesseX;
+	private JLabel lblVitesseY;
+	private JLabel lblAffichageVitesseY;
+	private JButton btnMenu;
+	private JButton btnAssemblage;
+	private JFrame fenetreMere;
+	final static double RAYON_TERRE = 6371000;
+	private ZoneDessinMiniMap zoneDessinMiniMap;
+
+	/**
+	 * Launch the application.
+	 */
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					FenetreSimulateur frame = new FenetreSimulateur(null);
+					frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	/**
+	 * Create the frame.
+	 */
+	public FenetreSimulateur(JFrame fenetreMere) {
+		this.fenetreMere = fenetreMere;
+		
+		setTitle("La science des fus\u00E9es pour les nuls");
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 1200, 800);
+		
+		menuBar = new JMenuBar();
+		setJMenuBar(menuBar);
+		
+		JMenu mnOptions = new JMenu("Options");
+		mnOptions.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+		menuBar.add(mnOptions);
+		
+		JMenuItem mntmGuideDUtilisation = new JMenuItem("Guide d'utilisation");
+		mntmGuideDUtilisation.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				afficherGuideUtilisation();
+			}
+		});
+		mntmGuideDUtilisation.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+		mnOptions.add(mntmGuideDUtilisation);
+		
+		JMenuItem mntmConceptScientifiques = new JMenuItem("Concepts Scientifiques");
+		mntmConceptScientifiques.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				afficherConceptsScientifiques();
+			}
+		});
+		mntmConceptScientifiques.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+		mnOptions.add(mntmConceptScientifiques);
+		
+		JMenuItem mntmAPropos = new JMenuItem("\u00C0 propos");
+		mntmAPropos.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				afficherAPropos();
+			}
+		});
+		mntmAPropos.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+		mnOptions.add(mntmAPropos);
+		
+		JMenuItem mntmQuitter = new JMenuItem("Quitter");
+		mntmQuitter.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				quiterApp();
+			}
+		});
+		mntmQuitter.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+		mnOptions.add(mntmQuitter);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+		
+		zoneDessinAssemblage = new ZoneDessinAssemblage(ensemblePieces.getListeCompletPieces());
+		zoneDessinAssemblage.addSelectionPiecesListenerListener(new SelectionPiecesListener() {
+			@Override
+			public void envoyerPieces(int k) {
+				selectionnerPiece(k);
+				if((ensemblePieces.capsulePresente()) && (ensemblePieces.reservoirPresent()) && (ensemblePieces.moteurPresent())) {
+					btnLancerLaFusee.setEnabled(true);
+				}
+			}
+		});
+		
+		panelDonneesVolC = new JPanel();
+		panelDonneesVolC.setBorder(new LineBorder(new Color(0, 0, 0)));
+		panelDonneesVolC.setVisible(false);
+		
+		panelDonneesVolD = new JPanel();
+		panelDonneesVolD.setBorder(new LineBorder(new Color(0, 0, 0)));
+		panelDonneesVolD.setLayout(null);
+		panelDonneesVolD.setVisible(false);
+		
+		panelDonneesVolE = new JPanel();
+		panelDonneesVolE.setBorder(new LineBorder(new Color(0, 0, 0)));
+		panelDonneesVolE.setVisible(false);
+		
+		sliderAngle = new JSlider();
+		sliderAngle.setValue(90);
+		sliderAngle.setMajorTickSpacing(10);
+		sliderAngle.setMinorTickSpacing(2);
+		sliderAngle.setMaximum(180);
+		sliderAngle.setPaintTicks(true);
+		sliderAngle.setPaintLabels(true);
+		sliderAngle.setFont(new Font("Agency FB", Font.PLAIN, 10));
+		sliderAngle.setBounds(110, 526, 329, 40);
+		sliderAngle.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent arg0) {
+				//debut
+				changerAngleFusee();
+				//fin
+			}
+		});
+		
+		sliderAngle.setVisible(false);
+		
+		lblInclinaison = new JLabel("Inclinaison:");
+		lblInclinaison.setVisible(false);
+		
+		btnLeft = new JButton("<");
+		btnLeft.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				initialiserForceRCS(KeyEvent.VK_LEFT);
+			}
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				zoneDessinOrbite.retirerForceRCS();
+			}
+		});
+		btnLeft.setVisible(false);
+		
+		btnUp = new JButton("v");
+		btnUp.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				initialiserForceRCS(KeyEvent.VK_DOWN);
+			}
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				zoneDessinOrbite.retirerForceRCS();
+			}
+		});
+		btnUp.setVisible(false);
+		
+		btnDown = new JButton(">");
+		btnDown.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				initialiserForceRCS(KeyEvent.VK_RIGHT);
+			}
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				zoneDessinOrbite.retirerForceRCS();
+			}
+		});
+		btnDown.setVisible(false);
+		
+		btnRight = new JButton("^");
+		btnRight.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				initialiserForceRCS(KeyEvent.VK_UP);
+			}
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				zoneDessinOrbite.retirerForceRCS();
+			}
+		});
+		btnRight.setVisible(false);
+		btnRight.setBounds(170, 548, 89, 23);
+		contentPane.add(btnRight);
+		btnDown.setBounds(350, 577, 89, 23);
+		contentPane.add(btnDown);
+		btnUp.setBounds(170, 577, 89, 23);
+		contentPane.add(btnUp);
+		btnLeft.setBounds(10, 576, 89, 23);
+		contentPane.add(btnLeft);
+		lblInclinaison.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblInclinaison.setBounds(10, 526, 64, 23);
+		contentPane.add(lblInclinaison);
+		
+		contentPane.add(sliderAngle);
+		panelDonneesVolE.setBounds(10, 398, 429, 38);
+		contentPane.add(panelDonneesVolE);
+		panelDonneesVolE.setLayout(null);
+		
+		lblMasseDecollage = new JLabel("Masse (kg):");
+		lblMasseDecollage.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblMasseDecollage.setBounds(10, 4, 70, 29);
+		panelDonneesVolE.add(lblMasseDecollage);
+		
+		lblAffichageMasseDecollage = new JLabel((int) ensemblePieces.getMasseAvecCarburant() + "");
+		lblAffichageMasseDecollage.setHorizontalAlignment(SwingConstants.CENTER);
+		lblAffichageMasseDecollage.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblAffichageMasseDecollage.setBounds(210, 4, 209, 29);
+		panelDonneesVolE.add(lblAffichageMasseDecollage);
+		panelDonneesVolD.setBounds(10, 319, 429, 68);
+		contentPane.add(panelDonneesVolD);
+		
+		lblPousseEnX = new JLabel("Pouss\u00E9e en X(N):");
+		lblPousseEnX.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblPousseEnX.setBounds(10, 3, 190, 29);
+		panelDonneesVolD.add(lblPousseEnX);
+		
+		lblPousseEnY = new JLabel("Pouss\u00E9e en Y(N):");
+		lblPousseEnY.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblPousseEnY.setBounds(10, 35, 190, 29);
+		panelDonneesVolD.add(lblPousseEnY);
+		
+		lblAffichagePousseeX = new JLabel("0");
+		lblAffichagePousseeX.setHorizontalAlignment(SwingConstants.CENTER);
+		lblAffichagePousseeX.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblAffichagePousseeX.setBounds(210, 3, 209, 29);
+		panelDonneesVolD.add(lblAffichagePousseeX);
+		
+		lblAffichagePousseeY = new JLabel("0");
+		lblAffichagePousseeY.setHorizontalAlignment(SwingConstants.CENTER);
+		lblAffichagePousseeY.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblAffichagePousseeY.setBounds(210, 35, 209, 29);
+		panelDonneesVolD.add(lblAffichagePousseeY);
+		panelDonneesVolC.setBounds(10, 270, 429, 38);
+		contentPane.add(panelDonneesVolC);
+		panelDonneesVolC.setLayout(null);
+		
+		lblAltitude = new JLabel("Altitude (m):");
+		lblAltitude.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblAltitude.setBounds(10, 4, 70, 29);
+		panelDonneesVolC.add(lblAltitude);
+		
+		lblAffichageAltitude = new JLabel("0");
+		lblAffichageAltitude.setHorizontalAlignment(SwingConstants.CENTER);
+		lblAffichageAltitude.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblAffichageAltitude.setBounds(210, 4, 209, 29);
+		panelDonneesVolC.add(lblAffichageAltitude);
+		
+		panelDonneesVolB = new JPanel();
+		panelDonneesVolB.setBorder(new LineBorder(new Color(0, 0, 0)));
+		panelDonneesVolB.setVisible(false);
+		panelDonneesVolB.setBounds(10, 191, 429, 68);
+		contentPane.add(panelDonneesVolB);
+		panelDonneesVolB.setLayout(null);
+		
+		lblAccelerationEnX = new JLabel("Acc\u00E9l\u00E9ration en X(m/s\u00B2):");
+		lblAccelerationEnX.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblAccelerationEnX.setBounds(10, 3, 190, 29);
+		panelDonneesVolB.add(lblAccelerationEnX);
+		
+		lblAccelerationEnY = new JLabel("Acc\u00E9l\u00E9ration en Y(m/s\u00B2):");
+		lblAccelerationEnY.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblAccelerationEnY.setBounds(10, 35, 190, 29);
+		panelDonneesVolB.add(lblAccelerationEnY);
+		
+		lblAffichageAccX = new JLabel("0");
+		lblAffichageAccX.setHorizontalAlignment(SwingConstants.CENTER);
+		lblAffichageAccX.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblAffichageAccX.setBounds(210, 3, 209, 29);
+		panelDonneesVolB.add(lblAffichageAccX);
+		
+		lblAffichageAccY = new JLabel("0");
+		lblAffichageAccY.setHorizontalAlignment(SwingConstants.CENTER);
+		lblAffichageAccY.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblAffichageAccY.setBounds(210, 35, 209, 29);
+		panelDonneesVolB.add(lblAffichageAccY);
+		
+		panelDonneesVolA = new JPanel();
+		panelDonneesVolA.setBorder(new LineBorder(new Color(0, 0, 0)));
+		panelDonneesVolA.setVisible(false);
+		panelDonneesVolA.setBounds(10, 11, 429, 169);
+		contentPane.add(panelDonneesVolA);
+		panelDonneesVolA.setLayout(null);
+		
+		progressBarPoussee = new JProgressBar();
+		progressBarPoussee.setFont(new Font("Agency FB", Font.PLAIN, 24));
+		progressBarPoussee.setForeground(Color.GREEN);
+		progressBarPoussee.setStringPainted(true);
+		progressBarPoussee.setBounds(10, 45, 409, 32);
+		panelDonneesVolA.add(progressBarPoussee);
+		
+		lblPousse = new JLabel("Pouss\u00E9e:");
+		lblPousse.setFont(new Font("Agency FB", Font.PLAIN, 24));
+		lblPousse.setBounds(10, 11, 68, 23);
+		panelDonneesVolA.add(lblPousse);
+		
+		lblCarburanRestant = new JLabel("Carburant restant:");
+		lblCarburanRestant.setFont(new Font("Agency FB", Font.PLAIN, 24));
+		lblCarburanRestant.setBounds(10, 88, 139, 23);
+		panelDonneesVolA.add(lblCarburanRestant);
+		
+		progressBarCarburantRestant = new JProgressBar();
+		progressBarCarburantRestant.setValue(100);
+		progressBarCarburantRestant.setStringPainted(true);
+		progressBarCarburantRestant.setForeground(Color.GREEN);
+		progressBarCarburantRestant.setFont(new Font("Agency FB", Font.PLAIN, 24));
+		progressBarCarburantRestant.setBounds(10, 122, 409, 32);
+		panelDonneesVolA.add(progressBarCarburantRestant);
+		zoneDessinAssemblage.setBounds(459, 11, 725, 530);
+		contentPane.add(zoneDessinAssemblage);
+		
+		zoneDessinDecollage = new ZoneDessinDecollage(ensemblePieces);
+		zoneDessinDecollage.addMettreAJourDonneesVolListener(new MettreAJourDonneesVolListener() {
+			public void mettreAJourDonneesVol() {
+				//debut
+				mettreAJourDecollage();
+				//fin
+			}
+		});
+		zoneDessinDecollage.addPasserAuVolOrbitalListener(new PasserAuVolOrbitalListener() {
+			public void passerAuVolOrbital() {
+				//Début
+				passerALOrbite();
+				//Fin
+			}
+		});
+		zoneDessinDecollage.setBounds(554, 11, 630, 530);
+		contentPane.add(zoneDessinDecollage);
+		setVisible(false);
+		setVisible(false);
+		
+		panelStatistiquesFusee = new JPanel();
+		panelStatistiquesFusee.setFont(new Font("Agency FB", Font.PLAIN, 16));
+		panelStatistiquesFusee.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Statistiques de la fus\u00E9e", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panelStatistiquesFusee.setBounds(10, 11, 429, 350);
+		contentPane.add(panelStatistiquesFusee);
+		panelStatistiquesFusee.setLayout(null);
+		
+		lblMasse = new JLabel("Masse (kg):");
+		lblMasse.setFont(new Font("Agency FB", Font.PLAIN, 24));
+		lblMasse.setBounds(10, 65, 87, 29);
+		panelStatistiquesFusee.add(lblMasse);
+		
+		lblCarburant = new JLabel("Carburant (L):");
+		lblCarburant.setFont(new Font("Agency FB", Font.PLAIN, 24));
+		lblCarburant.setBounds(10, 159, 104, 29);
+		panelStatistiquesFusee.add(lblCarburant);
+		
+		lblPousseMaximalekn = new JLabel("Pouss\u00E9e maximale (kN):");
+		lblPousseMaximalekn.setFont(new Font("Agency FB", Font.PLAIN, 24));
+		lblPousseMaximalekn.setBounds(10, 253, 178, 29);
+		panelStatistiquesFusee.add(lblPousseMaximalekn);
+		
+		lblAffichagePoussee = new JLabel("0.0");
+		lblAffichagePoussee.setHorizontalAlignment(SwingConstants.CENTER);
+		lblAffichagePoussee.setFont(new Font("Agency FB", Font.PLAIN, 24));
+		lblAffichagePoussee.setBounds(260, 254, 100, 27);
+		panelStatistiquesFusee.add(lblAffichagePoussee);
+		
+		lblAffichageCarburant = new JLabel("0.0");
+		lblAffichageCarburant.setHorizontalAlignment(SwingConstants.CENTER);
+		lblAffichageCarburant.setFont(new Font("Agency FB", Font.PLAIN, 24));
+		lblAffichageCarburant.setBounds(260, 159, 100, 27);
+		panelStatistiquesFusee.add(lblAffichageCarburant);
+		
+		lblAffichageMasse = new JLabel("0.0");
+		lblAffichageMasse.setHorizontalAlignment(SwingConstants.CENTER);
+		lblAffichageMasse.setFont(new Font("Agency FB", Font.PLAIN, 24));
+		lblAffichageMasse.setBounds(260, 65, 100, 27);
+		panelStatistiquesFusee.add(lblAffichageMasse);
+		
+		panelDonneesVolF = new JPanel();
+		panelDonneesVolF.setBorder(new LineBorder(new Color(0, 0, 0)));
+		panelDonneesVolF.setBounds(10, 447, 429, 68);
+		contentPane.add(panelDonneesVolF);
+		panelDonneesVolF.setLayout(null);
+		panelDonneesVolF.setVisible(false);
+		
+		lblVitesseX = new JLabel("Vitesse en X(m/s):");
+		lblVitesseX.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblVitesseX.setBounds(10, 3, 111, 29);
+		panelDonneesVolF.add(lblVitesseX);
+		
+		lblAffichageVitesseX = new JLabel("0");
+		lblAffichageVitesseX.setHorizontalAlignment(SwingConstants.CENTER);
+		lblAffichageVitesseX.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblAffichageVitesseX.setBounds(210, 3, 209, 29);
+		panelDonneesVolF.add(lblAffichageVitesseX);
+		
+		lblVitesseY = new JLabel("Vitesse en Y(m/s):");
+		lblVitesseY.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblVitesseY.setBounds(10, 35, 111, 29);
+		panelDonneesVolF.add(lblVitesseY);
+		
+		lblAffichageVitesseY = new JLabel("0");
+		lblAffichageVitesseY.setHorizontalAlignment(SwingConstants.CENTER);
+		lblAffichageVitesseY.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblAffichageVitesseY.setBounds(210, 35, 209, 29);
+		panelDonneesVolF.add(lblAffichageVitesseY);
+		
+		panelVerificationElements = new JPanel();
+		panelVerificationElements.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "V\u00E9ricateur de pi\u00E8ces", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
+		panelVerificationElements.setBounds(10, 372, 429, 169);
+		contentPane.add(panelVerificationElements);
+		panelVerificationElements.setLayout(null);
+		
+		lblCapsulePresente = new JLabel("Capsule pr\u00E9sente");
+		lblCapsulePresente.setForeground(Color.RED);
+		lblCapsulePresente.setFont(new Font("Agency FB", Font.PLAIN, 24));
+		lblCapsulePresente.setBounds(10, 20, 131, 29);
+		panelVerificationElements.add(lblCapsulePresente);
+		
+		lblReservoirPresent = new JLabel("R\u00E9servoir pr\u00E9sent");
+		lblReservoirPresent.setForeground(Color.RED);
+		lblReservoirPresent.setFont(new Font("Agency FB", Font.PLAIN, 24));
+		lblReservoirPresent.setBounds(10, 69, 137, 29);
+		panelVerificationElements.add(lblReservoirPresent);
+		
+		lblMoteurPresent = new JLabel("Moteur pr\u00E9sent");
+		lblMoteurPresent.setForeground(Color.RED);
+		lblMoteurPresent.setFont(new Font("Agency FB", Font.PLAIN, 24));
+		lblMoteurPresent.setBounds(10, 118, 116, 29);
+		panelVerificationElements.add(lblMoteurPresent);
+		
+		panelIndicateurAssemblage = new JPanel();
+		panelIndicateurAssemblage.setFont(new Font("Tahoma", Font.PLAIN, 11));
+		panelIndicateurAssemblage.setBounds(449, 610, 143, 46);
+		contentPane.add(panelIndicateurAssemblage);
+		panelIndicateurAssemblage.setLayout(null);
+		
+		lblPhaseAssemblage = new JLabel("Phase 1: assemblage");
+		lblPhaseAssemblage.setForeground(Color.GREEN);
+		lblPhaseAssemblage.setHorizontalAlignment(SwingConstants.CENTER);
+		lblPhaseAssemblage.setFont(new Font("Agency FB", Font.BOLD, 20));
+		lblPhaseAssemblage.setBounds(10, 11, 123, 24);
+		panelIndicateurAssemblage.add(lblPhaseAssemblage);
+		
+		panelIndicateurDecollage = new JPanel();
+		panelIndicateurDecollage.setLayout(null);
+		panelIndicateurDecollage.setBounds(741, 610, 143, 46);
+		contentPane.add(panelIndicateurDecollage);
+		
+		lblPhaseDecollage = new JLabel("Phase 2: d\u00E9collage");
+		lblPhaseDecollage.setForeground(Color.RED);
+		lblPhaseDecollage.setHorizontalAlignment(SwingConstants.CENTER);
+		lblPhaseDecollage.setFont(new Font("Agency FB", Font.BOLD, 20));
+		lblPhaseDecollage.setBounds(10, 11, 123, 24);
+		panelIndicateurDecollage.add(lblPhaseDecollage);
+		
+		btnLancerLaFusee = new JButton("LANCER LA FUS\u00C9E");
+		btnLancerLaFusee.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				//debut
+				passerAuDecollage();
+				//fin
+			}
+		});
+		btnLancerLaFusee.setFont(new Font("Agency FB", Font.PLAIN, 44));
+		btnLancerLaFusee.setBounds(10, 610, 429, 46);
+		contentPane.add(btnLancerLaFusee);
+		
+		panelIndicateurVolOrbital = new JPanel();
+		panelIndicateurVolOrbital.setLayout(null);
+		panelIndicateurVolOrbital.setBounds(1031, 610, 143, 46);
+		contentPane.add(panelIndicateurVolOrbital);
+		
+		lblPhaseVol = new JLabel("Phase 3: vol orbital");
+		lblPhaseVol.setForeground(Color.RED);
+		lblPhaseVol.setHorizontalAlignment(SwingConstants.CENTER);
+		lblPhaseVol.setFont(new Font("Agency FB", Font.BOLD, 20));
+		lblPhaseVol.setBounds(10, 11, 123, 24);
+		panelIndicateurVolOrbital.add(lblPhaseVol);
+		
+		btnDecollage = new JButton("D\u00C9COLLAGE");
+		btnDecollage.setFont(new Font("Agency FB", Font.PLAIN, 44));
+		btnDecollage.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				//début
+				lancerLaFusee();
+				//fin
+			}
+		});
+		btnDecollage.setBounds(10, 610, 429, 46);
+		contentPane.add(btnDecollage);
+		btnDecollage.setVisible(false);
+		
+		sliderPoussee = new JSlider();
+		sliderPoussee.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				//debut
+				changerPoussee();
+				//fin
+			}
+		});
+		sliderPoussee.setFont(new Font("Agency FB", Font.PLAIN, 10));
+		sliderPoussee.setMajorTickSpacing(10);
+		sliderPoussee.setValue(100);
+		sliderPoussee.setPaintTicks(true);
+		sliderPoussee.setPaintLabels(true);
+		sliderPoussee.setMinorTickSpacing(1);
+		sliderPoussee.setVisible(false);
+		sliderPoussee.setBounds(110, 566, 329, 40);
+		contentPane.add(sliderPoussee);
+		
+		lblPoussee = new JLabel("Pouss\u00E9e:");
+		lblPoussee.setVisible(false);
+		lblPoussee.setFont(new Font("Agency FB", Font.PLAIN, 20));
+		lblPoussee.setBounds(10, 566, 64, 23);
+		contentPane.add(lblPoussee);
+		
+		btnMenu = new JButton("RETOURNER AU MENU");
+		btnMenu.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				//debut
+				revenirAuMenu();
+				//fin
+			}
+		});
+		btnMenu.setVisible(false);
+		btnMenu.setFont(new Font("Agency FB", Font.PLAIN, 44));
+		btnMenu.setBounds(10, 667, 429, 46);
+		contentPane.add(btnMenu);
+		
+		btnAssemblage = new JButton("RETOURNER A L'ASSEMBLAGE");
+		btnAssemblage.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				//début
+				revenirALAssemblage();
+				//fin
+			}
+		});
+		btnAssemblage.setVisible(false);
+		btnAssemblage.setFont(new Font("Agency FB", Font.PLAIN, 44));
+		btnAssemblage.setBounds(10, 610, 429, 46);
+		contentPane.add(btnAssemblage);
+		
+		zoneDessinMiniMap = new ZoneDessinMiniMap();
+		zoneDessinMiniMap.setBounds(459, 11, 95, 530);
+		contentPane.add(zoneDessinMiniMap);
+		
+		zoneDessinOrbite = new ZoneDessinOrbitale(ensemblePieces);
+		zoneDessinOrbite.addMettreAJourListenerListener(new MettreAJourListener() {
+			public void ParametresOrbitale() {
+				//debut
+				mettreAJourOrbite();
+				//fin
+			}
+		});
+		zoneDessinOrbite.setBounds(459, 11, 725, 530);
+		contentPane.add(zoneDessinOrbite);
+		zoneDessinMiniMap.setVisible(false);
+		
+		//Initialiser les composantes aux bonnes valeurs
+		initialiserComposantesAssemblage();
+		
+	}
+	//James
+	///**
+	 //* Méthode pour reinitialiser tous les valeurs de départ en vue d'un prochain essai
+	// */
+	//private void reinitialiserSimulation() { // Appelé après le bouton recommencer appuyé
+		//zoneDessinOrbite.reinitialiserValeursOrbitales();
+		//Partie de Thomas ici
+	//}
+	
+	//James
+	/**
+	 * Méthode permettant de quitter l'application
+	 */
+	private void quiterApp() {
+		System.exit(0);
+	}
+	
+	//James
+	/**
+	 * Méthode pour afficher le message du À propos 
+	 */
+	private void afficherAPropos() {
+		JOptionPane.showMessageDialog(null, "YOlO, ON N'A PAS LE TEMPS, BYE BYE LA FUSEE ");
+	}
+	
+	//James
+	/**
+	 * Méthode permettant d'afficher les concepts scientifiques reliés à la simulation
+	 */
+	private void afficherConceptsScientifiques() {
+		ConceptsScientifiques fenetreConceptsScientifiques = new ConceptsScientifiques();
+		fenetreConceptsScientifiques.setVisible(true);
+	}
+	
+	//James
+	/**
+	 * Méthode permettant d'afficher le guide d'utilisation 
+	 */
+	private void afficherGuideUtilisation() {
+		GuideUtilisation fenetreGuideUtilisation = new GuideUtilisation();
+		fenetreGuideUtilisation.setVisible(true);
+	}
+	//Thomas
+	/**
+	 * Méthode qui permet de passer à la phase de vol orbital
+	 */
+	private void passerALOrbite() {
+		zoneDessinOrbite.requestFocus();
+		zoneDessinOrbite.setVisible(true);
+		zoneDessinOrbite.initialiserVolOrbital();
+		zoneDessinDecollage.setVisible(false);
+		sliderAngle.setVisible(false);
+		sliderPoussee.setVisible(false);
+		lblInclinaison.setVisible(false);
+		lblPoussee.setVisible(false);
+		btnDecollage.setVisible(false);
+		btnUp.setVisible(true);
+		btnDown.setVisible(true);
+		btnLeft.setVisible(true);
+		btnRight.setVisible(true);
+		btnAssemblage.setVisible(true);
+		btnMenu.setVisible(true);
+		lblPhaseVol.setForeground(Color.green);
+	}
+	//Thomas
+	/**
+	 * Méthode qui permet de passer à la phase de décollage
+	 */
+	private void passerAuDecollage() {
+		zoneDessinAssemblage.setVisible(false);
+		panelStatistiquesFusee.setVisible(false);
+		panelVerificationElements.setVisible(false);
+		btnLancerLaFusee.setVisible(false);
+		panelDonneesVolA.setVisible(true);
+		panelDonneesVolB.setVisible(true);
+		panelDonneesVolC.setVisible(true);
+		panelDonneesVolD.setVisible(true);
+		panelDonneesVolE.setVisible(true);
+		panelDonneesVolF.setVisible(true);
+		sliderAngle.setVisible(true);
+		sliderPoussee.setVisible(true);
+		lblInclinaison.setVisible(true);
+		lblPoussee.setVisible(true);
+		btnDecollage.setVisible(true);
+		zoneDessinDecollage.setVisible(true);
+		zoneDessinDecollage.initialiserValeurs();
+		zoneDessinMiniMap.setVisible(true);
+		lblPhaseDecollage.setForeground(Color.GREEN);
+		initialiserComposantesVol();
+	}
+	//Thomas
+	/**¸
+	 * Méthode qui lance la fusée
+	 */
+	private void lancerLaFusee() {
+		zoneDessinDecollage.lancerLeDecollage();
+		btnDecollage.setEnabled(false);
+		progressBarPoussee.setValue(sliderPoussee.getValue());
+	}
+	//Thomas
+	/**
+	 * Méthode qui change l'angle de la fusée
+	 */
+	private void changerAngleFusee() {
+		zoneDessinDecollage.setInclinaison(sliderAngle.getValue());
+	}
+	//Thomas
+	/**
+	 * Méthode qui change le pourcentage de poussée de la fusée
+	 */
+	private void changerPoussee() {
+		zoneDessinDecollage.setPourcentagePousse(sliderPoussee.getValue());
+		if(btnDecollage.isEnabled()) {
+			progressBarPoussee.setValue(0);
+		} else {
+			progressBarPoussee.setValue(sliderPoussee.getValue());
+		}
+	}
+	//Thomas
+	/**
+	 * Méthode qui met à jours les données pendant le décollage
+	 */
+	private void mettreAJourDecollage() {
+		lblAffichageAccX.setText((int) zoneDessinDecollage.getAcceleration().getX() + "");
+		lblAffichageAccY.setText((int) zoneDessinDecollage.getAcceleration().getY() + "");
+		lblAffichageAltitude.setText((int) zoneDessinDecollage.getPosition().getY() + "");
+		lblAffichagePousseeX.setText((int) zoneDessinDecollage.getPoussee().getX() + "");
+		lblAffichagePousseeY.setText((int) zoneDessinDecollage.getPoussee().getY() + "");
+		lblAffichageMasseDecollage.setText((int) ensemblePieces.getMasseAvecCarburant() + "");
+		lblAffichageVitesseX.setText((int) zoneDessinDecollage.getVitesse().getX() + "");
+		lblAffichageVitesseY.setText((int) zoneDessinDecollage.getVitesse().getY() + "");
+		progressBarCarburantRestant.setValue((int) ((ensemblePieces.getCarburantRestant()/ensemblePieces.getCarburant()) * 100));
+		zoneDessinMiniMap.mettreAJourValeurs(zoneDessinDecollage.getPosition().getY());
+	}
+	//Thomas
+	/**
+	 * Méthode qui met à jour les données de vol pendant le décollage
+	 */
+	private void mettreAJourOrbite() {
+		lblAffichageAccX.setText((int) zoneDessinOrbite.getAcceleration().getX() + "");
+		lblAffichageAccY.setText((int) zoneDessinOrbite.getAcceleration().getY() + "");
+		lblAffichageAltitude.setText((int) zoneDessinOrbite.getPosition().module() - RAYON_TERRE + "");
+		lblAffichagePousseeX.setText((int) zoneDessinOrbite.getForceRCS().getX() + "");
+		lblAffichagePousseeY.setText((int) zoneDessinOrbite.getForceRCS().getY() + "");
+		lblAffichageMasseDecollage.setText((int) ensemblePieces.getCapsule().getMasse() + "");
+		lblAffichageVitesseX.setText((int) zoneDessinOrbite.getVitesse().getX() + "");
+		lblAffichageVitesseY.setText((int) zoneDessinOrbite.getVitesse().getY() + "");
+		progressBarCarburantRestant.setValue(0);
+		if((zoneDessinOrbite.getForceRCS().getX() != 0) || (zoneDessinOrbite.getForceRCS().getY() != 0)) {
+			progressBarPoussee.setValue(100);
+		} else {
+			progressBarPoussee.setValue(0);
+		}
+	}
+	
+	//James
+	/**
+	 * Méthode pour signaler l'ajout d'une force RCS sur la fusée
+	 * @param touche Le code du keyEvent de la touche directionnelle
+	 */
+	private void initialiserForceRCS(int touche) {
+		double forceRCS = ensemblePieces.getPousseeRCS();
+		zoneDessinOrbite.ajouterForceRCS(touche, forceRCS);
+	}
+	
+	//Thomas
+	/**
+	 * Méthode qui permet de sélectionner une pièce
+	 * @param indice l'indice de la pièce
+	 */
+	private void selectionnerPiece(int indice) {
+		ensemblePieces.selectionnerPiece(indice);
+		lblAffichagePoussee.setText(ensemblePieces.getPousseeFusee() + "");
+		lblAffichageMasse.setText(ensemblePieces.getMasseAVide() + "");
+		lblAffichageCarburant.setText(ensemblePieces.getCarburant() + "");
+		if(ensemblePieces.capsulePresente()) {
+			lblCapsulePresente.setForeground(Color.green);
+		}
+
+		if(ensemblePieces.reservoirPresent()) {
+			lblReservoirPresent.setForeground(Color.green);
+		}
+
+		if(ensemblePieces.moteurPresent()) {
+			lblMoteurPresent.setForeground(Color.green);
+		}
+	}
+	//Thomas
+	/**
+	 * Méthode qui permet de revenir à la phase d'assemblage
+	 */
+	private void revenirALAssemblage() {
+		zoneDessinAssemblage.setVisible(true);
+		panelStatistiquesFusee.setVisible(true);
+		panelVerificationElements.setVisible(true);
+		btnLancerLaFusee.setVisible(true);
+		btnDecollage.setEnabled(true);
+		lblPhaseDecollage.setForeground(Color.red);
+		lblPhaseVol.setForeground(Color.red);
+		zoneDessinOrbite.setVisible(false);
+		btnUp.setVisible(false);
+		btnDown.setVisible(false);
+		btnLeft.setVisible(false);
+		btnRight.setVisible(false);
+		btnAssemblage.setVisible(false);
+		btnMenu.setVisible(false);
+		panelDonneesVolA.setVisible(false);
+		panelDonneesVolB.setVisible(false);
+		panelDonneesVolC.setVisible(false);
+		panelDonneesVolD.setVisible(false);
+		panelDonneesVolE.setVisible(false);
+		panelDonneesVolF.setVisible(false);
+		zoneDessinAssemblage.reinitialiserValeursAssemblage();
+		zoneDessinDecollage.reinitialiserValeurs();
+		zoneDessinOrbite.reinitialiserValeursOrbitales();
+		zoneDessinMiniMap.setVisible(false);
+		zoneDessinMiniMap.reinitialiserValeurs();
+		ensemblePieces.reinitialiserValeurs();
+		initialiserComposantesAssemblage();
+	}
+	//Thomas
+	/**
+	 * Méthode qui initialise les composantes d'interfaces d'assemblage aux valeurs désiréees
+	 */
+	private void initialiserComposantesAssemblage() {
+		lblAffichageMasse.setText(ensemblePieces.getMasseAVide() + "");
+		lblAffichagePoussee.setText(ensemblePieces.getPousseeFusee() + "");
+		lblAffichageCarburant.setText(ensemblePieces.getCarburant() + "");
+		btnLancerLaFusee.setEnabled(false);
+		lblCapsulePresente.setForeground(Color.red);
+		lblReservoirPresent.setForeground(Color.red);
+		lblMoteurPresent.setForeground(Color.red);
+	}
+	//Thomas
+	/**
+	* Méthode qui initialise les composantes d'interfaces d'assemblage aux valeurs désiréees
+	*/
+	private void initialiserComposantesVol() {
+		lblAffichageAccX.setText(0 + "");
+		lblAffichageAccY.setText(0 + "");
+		lblAffichageAltitude.setText(0 + "");
+		lblAffichageMasseDecollage.setText((int) (ensemblePieces.getMasseAvecCarburant()) + "");
+		lblAffichagePousseeX.setText(0 + "");
+		lblAffichagePousseeY.setText(0 + "");
+		lblAffichageVitesseX.setText(0 + "");
+		lblAffichageVitesseX.setText(0 + "");
+		sliderAngle.setValue(90);
+		sliderPoussee.setValue(100);
+		progressBarCarburantRestant.setValue(100);
+		progressBarPoussee.setValue(100);
+	}
+	//Thomas
+	/**
+	 * Méthode qui permet de revenir au menu
+	 */
+	private void revenirAuMenu() {
+		fenetreMere.setVisible(true);
+		zoneDessinOrbite.arreterAnimation();
+		dispose();
+	}
+}

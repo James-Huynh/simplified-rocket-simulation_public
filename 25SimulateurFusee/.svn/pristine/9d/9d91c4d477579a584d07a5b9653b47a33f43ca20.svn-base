@@ -1,0 +1,59 @@
+package menuoptionapplication;
+
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
+import java.io.IOException;
+import java.net.URL;
+
+import javax.imageio.ImageIO;
+import javax.swing.JPanel;
+/**
+ * La classe représente le panel personnalisé contenant les concepts scientifiques
+ * @author James Huynh
+ *
+ */
+public class PanelConceptsScientifiques extends JPanel {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private Image imageConcepts;
+	private String nomImageConceptsScientifiques = "conceptsScientifiques_v1.png";
+
+	/**
+	 * Create the panel.
+	 */
+	public PanelConceptsScientifiques() {
+		initialiserImageConceptsScientifiques();
+	}
+	/**
+	 * Méthode qui dessine les concepts scientifiques
+	 * @param g Le contexte graphique
+	 */
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		Graphics2D g2d = (Graphics2D) g;	
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+
+		g2d.drawImage(imageConcepts, 0, 0, null);
+
+	}
+
+	/**
+	 * Méthode qui initialise l'image représentant les concepts scientifiques
+	 */
+	private void initialiserImageConceptsScientifiques() {
+		URL urlImageConceptsScientifique = getClass().getClassLoader().getResource(nomImageConceptsScientifiques);
+		try {
+			imageConcepts = ImageIO.read(urlImageConceptsScientifique);
+		} catch (IOException e) {
+			System.out.println("Il est impossible de lire le fichier");
+		}
+
+		double imageRatioLongueur = imageConcepts.getWidth(null)/747;
+		//imageConcepts.getScaledInstance((int) 747, (int) (383*imageRatioLongueur), Image.SCALE_SMOOTH);
+	}
+}

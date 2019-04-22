@@ -1,0 +1,42 @@
+package menuoptionapplication;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.border.EmptyBorder;
+/**
+ * La classe GuideUtilisation affiche le menu du guide d'utilisation
+ * @author James Huynh
+ *
+ */
+public class GuideUtilisation extends JFrame {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6255339335425803409L;
+	private JPanel contentPane;
+
+	/**
+	 * Create the frame.
+	 */
+	public GuideUtilisation() {
+		setTitle("Guide d'utilisation");
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setBounds(100, 100, 761, 429);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+		
+		JScrollPane scrollPaneGuideUtilisation = new JScrollPane();
+		scrollPaneGuideUtilisation.setBounds(0, 0, 745, 391);
+		contentPane.add(scrollPaneGuideUtilisation);
+		
+		JTextPane txtGuideUtilisation = new JTextPane();
+		txtGuideUtilisation.setEditable(false);
+		txtGuideUtilisation.setText("YOLO ON NA PAS LE TEMPS\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/");
+		scrollPaneGuideUtilisation.setViewportView(txtGuideUtilisation);
+	}
+}

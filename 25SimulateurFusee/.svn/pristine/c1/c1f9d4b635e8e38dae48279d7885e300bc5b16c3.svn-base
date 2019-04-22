@@ -1,0 +1,74 @@
+package ballondessinable;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+
+import interfaces.DessinableBallon;
+
+public class BallonGenerique implements DessinableBallon {
+	private Color couleurBallon;
+	private double masse;
+	private int distanceInterTexte = 20;
+	private Rectangle2D.Double rectangleBallon;
+	private int constantePolice = 12;
+	private String nomPiece, txtNom, txtMasse;
+
+
+	public void BallonGenerique (String nom, double masse) {
+		this.nomPiece = nom;
+		this.masse = masse;
+
+	}
+	
+	public void dessinerBallon(Graphics2D g2d, int x, int y, int longueur, int hauteur) {
+		couleurBallon = new Color(255, 255, 0, 50);
+		rectangleBallon = new Rectangle2D.Double(0, 0, longueur, hauteur);
+	}
+
+	public void creerTexte() {
+		txtNom = "Nom: " + nomPiece;
+		txtMasse = "Masse: " + masse;
+	}
+
+	public Color getCouleurBallon() {
+		return couleurBallon;
+	}
+
+	public void setCouleurBallon(Color couleurBallon) {
+		this.couleurBallon = couleurBallon;
+	}
+
+	public Rectangle2D.Double getRectangleBallon() {
+		return rectangleBallon;
+	}
+
+	public void setRectangleBallon(Rectangle2D.Double rectangleBallon) {
+		this.rectangleBallon = rectangleBallon;
+	}
+
+	public String getTxtNom() {
+		return txtNom;
+	}
+
+	public void setTxtNom(String txtNom) {
+		this.txtNom = txtNom;
+	}
+
+	public String getTxtMasse() {
+		return txtMasse;
+	}
+
+	public void setTxtMasse(String txtMasse) {
+		this.txtMasse = txtMasse;
+	}
+
+	public int getDistanceInterTexte() {
+		return distanceInterTexte;
+	}
+
+	public void setDistanceInterTexte(int distanceInterTexte) {
+		this.distanceInterTexte = distanceInterTexte;
+	}
+
+}

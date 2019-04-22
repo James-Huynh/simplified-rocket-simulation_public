@@ -1,0 +1,99 @@
+package moteurphysique;
+
+import vecteur.Vecteur;
+/**
+ * La classe MoteurPhysiqueVol permet de calculer la variation des divers paramètres de la fusée pendant le décollage
+ * @author Thomas Corbeil
+ */
+public class MoteurPhysiqueVol {
+
+	final static double CONSTANTE_GRAVITATIONNELLE = 6.674e-11;
+	final static double RAYON_TERRE = 6371000;
+	final static double MASSE_TERRE = 5.972e24;
+	/**
+	 * Méthode qui calcule les divers paramètres de la fusée pour un intervalle de temps pendant le de décollage
+	 * @param position le vecteur position de la fusée
+	 * @param vitesse le vecteur vitesse de la fusée
+	 * @param acceleration le vecteur accélération de la fusée
+	 * @param poussee le scalaire représentant la poussée (en Kn) du moteur de la fusée
+	 * @param masse la masse (en Kg) de la fusée
+	 * @param deltaT l'intervalle de temps d'une itération physique
+	 * @param inclinaison le scalaire représentant l'inclinaison (en degrés) de la fusée
+	 */
+	public static void unCalculDecollage(Vecteur position, Vecteur vitesse, Vecteur acceleration,double poussee, double masse, double deltaT, double inclinaison) {
+		Vecteur sommeForces = (calculerPousseeDecollage(poussee, inclinaison)).additionne(calculerForceGraviteDecollage(position, masse));
+		
+		calculerAcceleration(acceleration, sommeForces, masse);
+		calculerChangementVitesse(acceleration, vitesse, deltaT);
+		calculerChangementPosition(vitesse, position, deltaT);
+	}
+	/**
+	 * Méthode qui calcule l'acélération d'un objet à partir de la somme des forces excercées sur lui, sa masse et son inclinaison et qui modifie son vecteur accélération.
+	 * @param acceleration Le vecteur accélération de l'objet
+	 * @param sommeForce le vecteur représentant la somme des frces sur l'objet
+	 * @param masse La masse (en Kg) de l'objet
+	 */
+	protected static void calculerAcceleration(Vecteur acceleration, Vecteur sommeForces, double masse) {
+		acceleration.setXY((sommeForces.getX()/masse), (sommeForces.getY()/masse));
+	}
+	/**
+	 * Méthode qui retourne le vecteur poussée de la fusée
+	 * @param poussee le scalaire représentant la poussée (en N) du moteur de la fusée
+	 * @param inclinaison le scalaire représentant l'inclinaison (en degrés) de la fusée
+	 * @return Le vecteur poussée de la fusée
+	 */
+	public static Vecteur calculerPousseeDecollage(double poussee, double inclinaison) {
+		double angleCalcul, pousseeX, pousseeY;
+		boolean xInverse = false;
+
+		if(inclinaison < 90.0) {
+			angleCalcul = 90 - inclinaison;
+			xInverse = true;
+		} else {
+			angleCalcul = inclinaison - 90;
+			xInverse = false;
+		}
+
+		pousseeY = (Math.cos(Math.toRadians(angleCalcul)) * poussee);
+		pousseeX = (Math.sin(Math.toRadians(angleCalcul)) * poussee);
+
+		if(xInverse) {
+			pousseeX = (pousseeX * -1.0);
+		}
+
+		return new Vecteur(pousseeX, pousseeY);
+	}
+	/**
+	 * Méthode qui retourne un vecteur correspondant à la force gravitationnelle excercée sur un objet au décollage
+	 * @param position le vecteur position de l'objet
+	 * @param masse la masse (en Kg) de l'objet
+	 * @return Le vecteur correspondant à la force gravitationnelle excercée sur l'objet
+	 */
+	private static Vecteur calculerForceGraviteDecollage(Vecteur position, double masse) {
+		//double r = position.getY() + RAYON_TERRE;
+		//double forceGravY = (((CONSTANTE_GRAVITATIONNELLE * MASSE_TERRE * masse)/r) * -1.0);
+		double forceGravY = (9.8 * masse) * -1.0;
+		
+		
+		return new Vecteur(0.0, forceGravY);
+	}
+	/**
+	 * Méthode qui calcule le changement de vitesse et modifie le vecteur vitesse en fonction du vecteur accélération et du deltaT donné
+	 * @param acceleration le vecteur représentant l'accélération de l'objet
+	 * @param vitesse le vecteur représentant la vitesse de l'objet 
+	 * @param deltaT un intervalle de temps (en secondes)
+	 */
+	protected static void calculerChangementVitesse(Vecteur acceleration, Vecteur vitesse, double deltaT) {
+		vitesse.setXY((vitesse.getX() + (acceleration.getX() * deltaT)), (vitesse.getY() + (acceleration.getY() * deltaT)));
+	}
+	/**
+	 * Méthode qui calcule le changement de position et modifie le vecteur position en fonction du vecteur vitesse et du deltaT donné
+	 * @param vitesse le vecteur représentant la vitesse de l'objet
+	 * @param position le vecteur représentant la position de l'objet
+	 * @param deltaT un intervalle de temps (en secondes)
+	 */
+	protected static void calculerChangementPosition(Vecteur vitesse, Vecteur position, double deltaT) {
+		position.setXY((position.getX() + (vitesse.getX() * deltaT)), (position.getY() + (vitesse.getY() * deltaT)));
+	}
+
+}

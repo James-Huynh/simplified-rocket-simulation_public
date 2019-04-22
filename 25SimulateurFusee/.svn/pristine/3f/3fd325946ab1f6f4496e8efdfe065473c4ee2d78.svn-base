@@ -1,0 +1,197 @@
+package pieces;
+
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.net.URL;
+
+import javax.imageio.ImageIO;
+
+import interfaces.Dessinable;
+import interfaces.DessinableGrandissement;
+import interfaces.DessinablePixel;
+
+/**
+ * La classe représente une pièce quelconque
+ * @author Thomas Corbeil
+ *
+ */
+public class Pieces implements Dessinable, DessinablePixel, DessinableGrandissement {
+	private String nomPiece;
+	private double masse;
+	private double largeur, hauteur;
+	private Image image, imageCarree;
+	private final double CONSTANTE_MONDE = 10.0;
+	
+	/**
+	 * Constructeur de la classe Pieces prenant comme paramètres le nom de l'image, sa version carrée et la masse
+	 * @param nomImage le nom de l'image utilisé pour représenter la piece
+	 * @param nomImageCarre  le nom d'image de format carré de la pièce
+	 * @param masse la masse (en Kg) de la pièce
+	 */
+	public Pieces(String nomPiece, String nomImage, String nomImageCarre, double masse) {
+		this.setNomPiece(nomPiece);
+		this.masse = masse;
+		
+		URL urlImage = getClass().getClassLoader().getResource(nomImage);
+		
+		if(urlImage == null) {
+			System.out.println("L'image" + nomImage + "est introuvable");
+		}
+		
+		try {
+			image = ImageIO.read(urlImage);
+		} catch (IOException e) {
+			System.out.println("Il est impossible de lire le fichier" + nomImage);
+		}
+		
+		URL urlImageCarree = getClass().getClassLoader().getResource(nomImageCarre);
+		
+		if(urlImageCarree == null) {
+			System.out.println("L'image" + nomImageCarre + "est introuvable");
+		}
+		
+		try {
+			imageCarree = ImageIO.read(urlImageCarree);
+		} catch (IOException e) {
+			System.out.println("Il est impossible de lire le fichier" + nomImageCarre);
+		} 
+		
+		largeur = image.getWidth(null);
+		hauteur = image.getHeight(null);
+	}
+	//Voir avec prof
+	//Faire rotation
+	public void dessiner(Graphics2D g2d, AffineTransform mat, double rotation, double x, double y, double centreRotX, double centreRotY) {
+		AffineTransform matOriginale = g2d.getTransform();
+		Point2D.Double point = new Point2D.Double();
+		
+		Rectangle2D.Double rectImageReelle = new Rectangle2D.Double(x, y, largeur/CONSTANTE_MONDE, hauteur/CONSTANTE_MONDE);
+		Shape rectTransfo = mat.createTransformedShape(rectImageReelle);
+		Rectangle2D rectCoordTransfo = rectTransfo.getBounds2D();
+		Image imageADessiner = image.getScaledInstance((int) rectCoordTransfo.getWidth(), (int) rectCoordTransfo.getHeight(), Image.SCALE_SMOOTH);
+		point.setLocation(centreRotX, centreRotY);
+		mat.transform(point, point);
+		g2d.rotate(Math.toRadians(rotation), point.getX(), point.getY());
+		g2d.drawImage(imageADessiner, (int)	Math.round(rectCoordTransfo.getX()), (int) Math.round(rectCoordTransfo.getY()), null);
+		g2d.setTransform(matOriginale);
+		
+	}
+	//Voir avec prof
+	public void dessinerPixel(Graphics2D g2d, int x, int y, int largeur, int hauteur, double rotation, double centreRotationX, double centreRotationY) {
+		AffineTransform matOriginale = g2d.getTransform();
+		Image imageADessiner = image.getScaledInstance(largeur, hauteur, Image.SCALE_SMOOTH);
+		g2d.rotate(Math.toRadians(rotation), centreRotationX, centreRotationY);
+		g2d.drawImage(imageADessiner, x, y, null);
+		g2d.setTransform(matOriginale);
+	}
+	//Javadoc dans l'interface
+	public void dessinerAvecGrandissement(Graphics2D g2d, AffineTransform mat, double rotation, double x, double y, double centreRotX, double centreRotY, double grandissement) {
+		Rectangle2D.Double rectImageReelle = new Rectangle2D.Double(x, y, (largeur/CONSTANTE_MONDE) * grandissement, (hauteur/CONSTANTE_MONDE) * grandissement);
+		Shape rectTransfo = mat.createTransformedShape(rectImageReelle);
+		Rectangle2D rectCoordTransfo = rectTransfo.getBounds2D();
+		Image imageADessiner = image.getScaledInstance((int) rectCoordTransfo.getWidth(), (int) rectCoordTransfo.getHeight(), Image.SCALE_SMOOTH);
+		g2d.drawImage(imageADessiner, (int)	Math.round(rectCoordTransfo.getX()), (int) Math.round(rectCoordTransfo.getY()), null);
+	}
+	/**
+	 * Méthode qui retourne un indice entre 0 et 3 indiquant le type de pièce
+	 *-0 la pièce n'a pas de type défini
+	 *-1 la pièce est une capsule
+	 *-2 la pièce est un réservoir
+	 *-3 la pièce est un moteur-
+	 * @return l'indice indiquant le type de pièce
+	 */
+	public int verifierTypePiece() {
+		return 0;
+	}
+	/**
+	 * Getter retournant la masse de la pièce
+	 * @return la masse de la pièce en Kg
+	 */
+	public double getMasse() {
+		return masse;
+	}
+	/**
+	 * Setter qui assigne une masse à la pièce
+	 * @param masse la masse de la pièce en Kg
+	 */
+	public void setMasse(double masse) {
+		this.masse = masse;
+	}
+	/**
+	 * Getter retourant la largeur de la pièce
+	 * @return la largeur de la pièce en m
+	 */
+	public double getLargeur() {
+		return largeur;
+	}
+	/**
+	 * Setter qui assigne une largeur à la pièce
+	 * @param largeur la largeur désirée de la pièce en m
+	 */
+	public void setLargeur(double largeur) {
+		this.largeur = largeur;
+	}
+	/**
+	 * Getter retournant la hauteur de la pièce
+	 * @return la hauteur de la pièce
+	 */
+	public double getHauteur() {
+		return hauteur;
+	}
+	/**
+	 * Setter qui assigne une hauteur à la pièce
+	 * @param hauteur la hauteur désirée de la pièce en m
+	 */
+	public void setHauteur(double hauteur) {
+		this.hauteur = hauteur;
+	}
+	
+	/**
+	 * Getter qui retourne l'image associée à la pièce
+	 * @return l'image associée à la pièce
+	 */
+	public Image getImage() {
+		return image;
+	}
+	/**
+	 * Setter qui assigne une image à la pièce
+	 * @param image l'image à associer à la pièce
+	 */
+	public void setImage(Image image) {
+		this.image = image;
+	}
+	/**
+	 * Setter qui assigne une image carrée à la pièce
+	 * @param imageCarre l'image carrée à associer à la pièce
+	 */
+	public Image getImageCarre() {
+		return imageCarree;
+	}
+	/**
+	 * Getter qui retourne l'image carrée associée à la pièce
+	 * @return l'image carrée associée à la pièce
+	 */
+	public void setImageCarre(Image imageCarre) {
+		this.imageCarree = imageCarre;
+	}
+	/**
+	 * Getter qui retourne le nom de la pièce
+	 * @return une chaîne contenant le nom de la pièce
+	 */
+	public String getNomPiece() {
+		return nomPiece;
+	}
+	/**
+	 * Setter qui assigne un nom à la pièce
+	 * @param nomPiece la chaîne contenant le nom de la pièce
+	 */
+	public void setNomPiece(String nomPiece) {
+		this.nomPiece = nomPiece;
+	}
+	
+}

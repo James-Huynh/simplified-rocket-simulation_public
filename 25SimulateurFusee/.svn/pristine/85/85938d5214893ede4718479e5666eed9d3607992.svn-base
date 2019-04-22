@@ -1,0 +1,290 @@
+package zonededessin;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+
+import javax.imageio.ImageIO;
+import javax.swing.JPanel;
+import javax.swing.event.EventListenerList;
+
+import ecouteurspersonnalises.SelectionPiecesListener;
+import pieces.Pieces;
+
+/**
+ * La classe ZoneDessinAssemblage sert à la construction de la fusée à partir d'un ensemble de pièces, l'utilisateur peut personnaliser sa fusée à sa guise
+ * @author James Huynh
+ *
+ */
+public class ZoneDessinAssemblage extends JPanel {
+
+	private static final long serialVersionUID = 6867462788558769791L;
+	private int indexZoneSelectionne, sectionFusee, ratioImagePiece = 4;
+	private boolean premiereFois = true;
+	private String txtCapsule = "Capsule", txtReservoir = "Reservoir", txtMoteur = "Moteur"; 
+	private double hauteurPanel, largeurPanel, TiersEnX, TiersEnY, DemiTiersY;
+	private double positionXCarre, positionYCarre, hauteurCarre, largeurCarre, positionXCarreInitiale, positionYCarreInitiale, ratioPetiteImagePiece = 0.75;
+	private double positionXImage, largeurImageCourante, hauteurImageCourante, largeurPetiteImagePiece, hauteurPetiteImagePiece, ratioHauteurCarre, ratioLargeurCarre;
+	private Image imageCarre;
+	private final String nomImageCarre = "carrePointille.png";
+	private double[] tableauCoordYImages= new double[3];
+	private ArrayList<Shape> listeCarreSelectionnable = new ArrayList<Shape>();
+	private final EventListenerList OBJETS_ENREGISTRES = new EventListenerList();
+	private Pieces pieceCourante = null, pieceCapsule = null, pieceMoteur = null, pieceReservoir = null;
+	private Pieces[] tableauPieces = null;
+	private Image[] tableauImagesIcone = null;
+	
+	/**
+	 * Le constructeur de la zone de dessin pour l'assemblage de la fusée
+	 * @param pieces Un tableau contenant des pièces ordonnées selon son type
+	 */
+	public ZoneDessinAssemblage(Pieces[] pieces) {
+		tableauPieces = pieces;
+		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				//Debut
+				if (verifierBonneCaseSelectionne(e.getPoint())) { //envoyer le bon image et creer la bonne pièce
+					pieceCourante = pieces[indexZoneSelectionne-1]; 
+					leveEvenPieces(indexZoneSelectionne-1);	
+					dessinerImagePiece();
+				}
+				//Fin
+			}
+		});
+		setBackground(Color.WHITE);
+
+		URL urlImageCarre = getClass().getClassLoader().getResource(nomImageCarre);
+
+		if(urlImageCarre == null) {
+			System.out.println("L'image" + nomImageCarre + "est introuvable");
+		}
+		try {
+			imageCarre = ImageIO.read(urlImageCarre);
+		} catch (IOException e) {
+			System.out.println("le fichier image du carre est impossible à lire");
+		}
+	}
+
+	/**
+	 * Le paintComponent pour dessiner tous les éléments reliés à la phase de l'assemblage
+	 * @param g Contexte graphique
+	 */
+	@Override
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		Graphics2D g2d = (Graphics2D) g;	
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+
+		if (premiereFois) {
+			premiereFois = false;
+			hauteurPanel = getHeight();
+			largeurPanel = getWidth();
+			TiersEnX = largeurPanel/3;
+			TiersEnY = hauteurPanel/3;
+			DemiTiersY = TiersEnY/2;
+			hauteurCarre = TiersEnX/4.5; // À ajuster
+			largeurCarre = TiersEnX/4.5;
+			largeurPetiteImagePiece = ratioPetiteImagePiece*largeurCarre;
+			hauteurPetiteImagePiece = largeurPetiteImagePiece;
+			positionXCarreInitiale = TiersEnX/4 - largeurCarre/2;
+			positionYCarreInitiale = TiersEnY - DemiTiersY - hauteurCarre/2;
+
+			tableauCoordYImages[0] = 1*TiersEnY - TiersEnY/2;
+			tableauCoordYImages[1] = 2*TiersEnY - TiersEnY/2;
+			tableauCoordYImages[2] = 3*TiersEnY - TiersEnY/2;
+
+			imageCarre = imageCarre.getScaledInstance((int) largeurCarre, (int) hauteurCarre, Image.SCALE_SMOOTH); 	 
+		}
+
+		g2d.drawString(txtCapsule, 20, 0 + 20); //Dessiner le petit texte
+		g2d.drawString(txtReservoir, 20, (int) (TiersEnY + 20));
+		g2d.drawString(txtMoteur, 20, (int) (2*TiersEnY + 20));
+
+		listeCarreSelectionnable.removeAll(listeCarreSelectionnable);
+		positionXCarre = positionXCarreInitiale;
+		positionYCarre = positionYCarreInitiale;
+
+		int n = 0;
+		for (int k = 0; k < 3; k++) { // Pour dessiner les carres pointillés et pieces miniatures
+			for (int i = 0; i < 3; i++) {
+				listeCarreSelectionnable.add(creerZoneSelectionnable (positionXCarre,  positionYCarre));
+				g2d.drawImage(imageCarre, (int) positionXCarre, (int) positionYCarre, null);
+				
+				tableauPieces[n].dessinerPixel(g2d, (int) positionXCarre, (int) positionYCarre, (int) largeurCarre, (int) hauteurCarre, 0, 0, 0);
+				
+				positionXCarre =  positionXCarre + TiersEnX/3.8;
+	
+				++n;
+			}
+			positionXCarre = positionXCarreInitiale;
+			positionYCarre = positionYCarre + TiersEnY;
+		}
+
+		for (int k = 1; k <= 2; k++) { // Pour dessiner les limitations des sections horizontales
+			g2d.setStroke(new BasicStroke(2));
+			g2d.drawLine(0, (int) TiersEnY*k, (int) TiersEnX, (int) TiersEnY*k); 
+		}
+		g2d.drawLine((int) TiersEnX, 0, (int) TiersEnX, (int) hauteurPanel); 
+
+
+
+		if (!(pieceCapsule == null)) { // Dessine la capsule à droite
+			hauteurImageCourante = pieceCapsule.getHauteur()*ratioImagePiece;
+			pieceCapsule.dessinerPixel(g2d, (int) positionXImage, (int) (tableauCoordYImages[0]-hauteurImageCourante/2), (int) pieceCapsule.getLargeur()*ratioImagePiece, (int) pieceCapsule.getHauteur()*ratioImagePiece, 0, 0, 0);
+		}
+		if (!(pieceMoteur == null)) { // Dessine le reservoir à droite
+			hauteurImageCourante = pieceMoteur.getHauteur()*ratioImagePiece;
+			pieceMoteur.dessinerPixel(g2d, (int) positionXImage, (int) (tableauCoordYImages[1]-hauteurImageCourante/2), (int) pieceMoteur.getLargeur()*ratioImagePiece, (int) pieceMoteur.getHauteur()*ratioImagePiece, 0, 0, 0);
+		}
+		if (!(pieceReservoir == null)) { // Dessine le moteur à droite
+			hauteurImageCourante = pieceReservoir.getHauteur()*ratioImagePiece;
+			pieceReservoir.dessinerPixel(g2d, (int) positionXImage, (int) (tableauCoordYImages[2]-hauteurImageCourante/2), (int) pieceReservoir.getLargeur()*ratioImagePiece, (int) pieceReservoir.getHauteur()*ratioImagePiece, 0, 0, 0);
+		}
+	}
+
+	/**
+	 * Méthode créant un rectangle (Shape) fantôme 
+	 * @param positionX La position (pixels) en x du rectangle
+	 * @param positionY La position (pixels) en y du rectangle
+	 * @return Le rectangle fantôme
+	 */
+	private Shape creerZoneSelectionnable (double positionX, double positionY) {
+		Shape rectangleFantome = new Rectangle2D.Double(positionX, positionY, largeurCarre, hauteurCarre);
+		return rectangleFantome;
+	}
+
+	/**
+	 * Méthode pour vérifier si une case d'une pièce a été sélectionnée
+	 * @param point Les coordonnées d'un click de la souris sous forme d'un point
+	 * @return Vrai si une case a été sélectionnée, faux dans le cas contraire
+	 */
+	private boolean verifierBonneCaseSelectionne (Point point) {
+		if (listeCarreSelectionnable.get(0).contains(point)) {
+			indexZoneSelectionne = 1;
+			return true;
+		}
+
+		if (listeCarreSelectionnable.get(1).contains(point)) {
+			indexZoneSelectionne = 2;
+			return true;
+		}
+
+		if (listeCarreSelectionnable.get(2).contains(point)) {
+			indexZoneSelectionne = 3;
+			return true;
+		}
+
+		if (listeCarreSelectionnable.get(3).contains(point)) {
+			indexZoneSelectionne = 4;
+			return true;
+		}
+
+		if (listeCarreSelectionnable.get(4).contains(point)) {
+			indexZoneSelectionne = 5;
+			return true;
+		}
+
+		if (listeCarreSelectionnable.get(5).contains(point)) {
+			indexZoneSelectionne = 6;
+			return true;
+		}
+
+		if (listeCarreSelectionnable.get(6).contains(point)) {
+			indexZoneSelectionne = 7;
+			return true;
+		}
+
+		if (listeCarreSelectionnable.get(7).contains(point)) {
+			indexZoneSelectionne = 8;
+			return true;
+		}
+
+		if (listeCarreSelectionnable.get(8).contains(point)) {
+			indexZoneSelectionne = 9;
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Méthode pour enregistrer un objet comme écouteur
+	 * @param obj Un élément de la classe d'écouteurs personnalisés
+	 */
+	public void addSelectionPiecesListenerListener (SelectionPiecesListener obj) {
+		OBJETS_ENREGISTRES.add(SelectionPiecesListener.class, obj);
+	}
+
+	/**
+	 * Méthode permettant de faire une lévée d'événement pour signaler la sélection d'une pièce
+	 * @param piece Une pièce de la fusée
+	 */
+	private void leveEvenPieces(int n) {
+		for (SelectionPiecesListener ecout: OBJETS_ENREGISTRES.getListeners(SelectionPiecesListener.class)) {
+			ecout.envoyerPieces(n);
+		}
+	}
+
+	/**
+	 * Méthode pour dessiner l'image de la pièce sélectionnée dans la section droite de la zone de dessin
+	 * @param piece Une pièce de la fusée
+	 */
+	private void dessinerImagePiece() {
+		sectionFusee = pieceCourante.verifierTypePiece();
+		largeurImageCourante = pieceCourante.getLargeur()*ratioImagePiece;
+		hauteurImageCourante = pieceCourante.getHauteur()*ratioImagePiece;
+		if(sectionFusee == 1) {
+			pieceCapsule = pieceCourante;
+		} else {
+			if(sectionFusee == 2) {
+				pieceMoteur = pieceCourante;
+			} else {
+				pieceReservoir = pieceCourante;
+			}
+		}
+		System.out.println(sectionFusee);
+		positionXImage = 2*TiersEnX - (largeurImageCourante/2); 
+		repaint();
+	}
+	
+/* ENLEVER
+	private void choisirBonRatioPetitePiece(int k, int n) {
+		double largeurPiece;
+		double hauteurPiece;
+		switch (k) {
+		case 0:
+			largeurPiece = tableauPieces[n].getImage().getWidth(null);
+			ratioHauteurCarre = largeurPetiteImagePiece/largeurPiece;
+			break;
+			
+		case 1:
+			hauteurPiece = tableauPieces[n].getImage().getHeight(null);
+			ratioLargeurCarre = largeurPetiteImagePiece/hauteurPiece;
+			break;
+			
+		case 2:
+			largeurPiece = tableauPieces[n].getImage().getWidth(null);
+			ratioHauteurCarre = largeurPetiteImagePiece/largeurPiece;
+			break;
+		}
+	}
+*/
+
+	public void reinitialiserValeursAssemblage() {
+		pieceCourante = null;
+		pieceCapsule = null;
+		pieceMoteur = null;
+		pieceReservoir = null;
+	}
+}

@@ -1,0 +1,43 @@
+package menuoptionapplication;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.border.EmptyBorder;
+import javax.swing.ScrollPaneConstants;
+/**
+ * La classe GuideUtilisation affiche le menu du guide d'utilisation
+ * @author James Huynh
+ *
+ */
+public class GuideUtilisation extends JFrame {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6255339335425803409L;
+	private JPanel contentPane;
+
+	/**
+	 * Create the frame.
+	 */
+	public GuideUtilisation() {
+		setTitle("Guide d'utilisation");
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setBounds(100, 100, 760, 429);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		scrollPane.setBounds(0, 0, 734, 390);
+		contentPane.add(scrollPane);
+		
+		PanelGuideUtilisation panelGuideUtilisation_ = new PanelGuideUtilisation();
+		scrollPane.setViewportView(panelGuideUtilisation_);
+	}
+}

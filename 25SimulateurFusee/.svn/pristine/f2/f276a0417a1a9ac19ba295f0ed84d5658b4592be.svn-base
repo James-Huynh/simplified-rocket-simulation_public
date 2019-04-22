@@ -1,0 +1,59 @@
+package trajectoire;
+
+import java.awt.Point;
+import java.awt.geom.Path2D;
+import java.util.ArrayList;
+
+import moteurphysique.MoteurPhysiqueOrbite;
+import vecteur.Vecteur;
+//Thomas Corbeil
+public class CalculsTrajectoire {
+	private final static double MASSE_TERRE = 5.972e24;
+	private final static double DIFFERENCE_MAXIMALE = 52.000;
+	private final static double deltaT = 0.005;
+	
+	public static ArrayList<Point.Double> calculerTrajectoire(double masse, Vecteur position, Vecteur vitesse, int nCalculsParPoint) {
+		Vecteur acceleration = new Vecteur(0, 0);
+		Vecteur vitesseLocale = new Vecteur(vitesse.getX(), vitesse.getY());
+		Vecteur positionLocale = new Vecteur(position.getX(), position.getY());
+		double xInitial = positionLocale.getX();
+		double yInitial = positionLocale.getY();
+		double xActuel = 0.0;
+		double yActuel = 0.0;
+		ArrayList<Point.Double> listePoints = new ArrayList<Point.Double>();
+		
+		listePoints.add(new Point.Double(xInitial, yInitial));
+		
+		while(((xInitial-xActuel > DIFFERENCE_MAXIMALE) || (xActuel-xInitial > DIFFERENCE_MAXIMALE)) || ((yInitial-yActuel > DIFFERENCE_MAXIMALE) || (yActuel-yInitial > DIFFERENCE_MAXIMALE))) {
+			for (int k = 0; k < nCalculsParPoint; k++) {
+				Vecteur forceGrav = MoteurPhysiqueOrbite.forceGravitationnelle(masse, MASSE_TERRE, positionLocale);
+				Vecteur sommeForces = MoteurPhysiqueOrbite.sommeForces(forceGrav, new Vecteur(0, 0));
+				MoteurPhysiqueOrbite.unCalculOrbite(sommeForces, positionLocale, vitesseLocale, acceleration, masse, deltaT);
+			}
+			xActuel = positionLocale.getX();
+			yActuel = positionLocale.getY();
+
+			if(((xInitial-xActuel > DIFFERENCE_MAXIMALE) && (xActuel-xInitial > DIFFERENCE_MAXIMALE)) || ((yInitial-yActuel > DIFFERENCE_MAXIMALE) && (yActuel-yInitial > DIFFERENCE_MAXIMALE))) {
+				listePoints.add(new Point.Double(xActuel, yActuel));
+			} else {
+				listePoints.add(new Point.Double(xInitial, yInitial));
+			}
+			System.out.println("TRAJECTOIRE EN COURS");
+		}
+
+		return listePoints;
+	}
+	
+	public static Path2D.Double creerTrajectoire(ArrayList<Point.Double> listePoints) {
+		Path2D.Double trajectoire = new Path2D.Double();
+		int longueurListe = listePoints.size();
+		
+		trajectoire.moveTo(listePoints.get(0).getX(), listePoints.get(0).getY());
+		
+		for(int k = 1;k < longueurListe; k++) {
+			trajectoire.lineTo(listePoints.get(k).getX(), listePoints.get(k).getY());
+		}
+		
+		return trajectoire;
+	}
+}

@@ -1,0 +1,43 @@
+package menuoptionapplication;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.border.EmptyBorder;
+/**
+ * La classe ConceptsScientifiques affiche le menu des concepts scientifiques
+ * @author James Huynh
+ *
+ */
+public class ConceptsScientifiques extends JFrame {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -143713004113554267L;
+	private JPanel contentPane;
+
+	/**
+	 * Create the frame.
+	 */
+	public ConceptsScientifiques() {
+		setTitle("Concepts scientifiques");
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+		setBounds(100, 100, 763, 422);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+		
+		JScrollPane scrollConceptsScientifiques = new JScrollPane();
+		scrollConceptsScientifiques.setBounds(0, 0, 747, 384);
+		contentPane.add(scrollConceptsScientifiques);
+		
+		JTextPane txtConceptsScientifiques = new JTextPane();
+		txtConceptsScientifiques.setEditable(false);
+		txtConceptsScientifiques.setText("YOLO ON NA PAS LE TEMPS\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/\r\n/");
+		scrollConceptsScientifiques.setViewportView(txtConceptsScientifiques);
+	}
+}

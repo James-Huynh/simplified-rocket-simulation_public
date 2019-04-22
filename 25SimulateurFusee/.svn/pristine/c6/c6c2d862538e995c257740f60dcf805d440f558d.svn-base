@@ -1,0 +1,72 @@
+package menuoptionapplication;
+
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.border.EmptyBorder;
+import javax.swing.ScrollPaneConstants;
+import java.awt.Font;
+import java.awt.Rectangle;
+/**
+ * La classe ConceptsScientifiques affiche le menu des concepts scientifiques
+ * @author James Huynh
+ *
+ */
+public class ConceptsScientifiques extends JFrame {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -143713004113554267L;
+	private JPanel contentPane;
+	private Image imageDeNewton;
+	private String nomImageConceptsScientifiques = " "; //À faire
+
+	/**
+	 * Create the frame.
+	 */
+	public ConceptsScientifiques() {
+		setTitle("Concepts scientifiques");
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		
+		
+		setBounds(200, 100, 1200, 800);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+		
+		JPanel panel = new JPanel();
+		panel.setBounds(0, 0, 747, 383);
+		contentPane.add(panel);
+		panel.setLayout(null);
+		
+		//initialiserImageConceptsScientifiques();
+		
+		JScrollPane scrollConceptsScientifiques = new JScrollPane();
+		scrollConceptsScientifiques.setBounds(0, 0, 747, 383);
+		panel.add(scrollConceptsScientifiques);
+
+
+	}
+	
+	private void initialiserImageConceptsScientifiques() {
+		URL urlImageConceptsScientifique = getClass().getClassLoader().getResource("Quelque chose"); //À faire
+		try {
+			imageDeNewton = ImageIO.read(urlImageConceptsScientifique);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+}

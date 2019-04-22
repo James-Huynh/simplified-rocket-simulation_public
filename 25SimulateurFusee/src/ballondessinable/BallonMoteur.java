@@ -1,0 +1,70 @@
+package ballondessinable;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+
+import pieces.Moteur;
+
+/**
+ * La classe BallonMoteur dérivant de BallonGenerique gère un ballon informatif à l'intention des moteurs
+ * @author James Huynh
+ *
+ */
+public class BallonMoteur extends BallonGenerique {
+
+	private double poussee, consommationCarburant;
+	private String txtPoussee, txtConsommationCarburant1, txtConsommationCarburant2;
+	private int positionXInitialeTxt, positionYInitialeTxt, positionYTxt, distanceInterTexte, distanceInterLigne = 14;
+
+	/**
+	 * Le constructeur pour les ballons spécifiques aux moteurs
+	 * @param moteur Le moteur associé
+	 * @param longueurBallon La longueur du ballon
+	 * @param hauteurBallon La hauteur de ballon
+	 */
+	public BallonMoteur(Moteur moteur, int longueurBallon, int hauteurBallon) {
+		super(moteur.getNomPiece(), moteur.getMasse());
+		this.poussee = moteur.getPoussee();
+		this.consommationCarburant = moteur.getConsommationCarburant();
+		this.distanceInterTexte = getDistanceInterTexte();
+		
+		creerTexteReservoir();
+	}
+	
+	/**
+	 * Méthode pour dessiner un ballon adapté pour un moteur
+	 */
+	public void dessinerBallon(Graphics2D g2d, int x, int y, int longueur, int hauteur) {
+		super.dessinerBallon(g2d, x, y, longueur, hauteur);
+		
+		positionXInitialeTxt = getPositionXInitialeTxt();
+		positionYInitialeTxt = getPositionYInitialeTxt();
+
+		Color couleurInitiale = g2d.getColor();
+
+		g2d.setColor(getCouleurTexte());
+		positionYTxt = positionYInitialeTxt;
+		g2d.drawString(getTxtNom(), positionXInitialeTxt, positionYTxt);
+		positionYTxt += distanceInterTexte;
+		g2d.drawString(getTxtMasse(), positionXInitialeTxt, positionYTxt);
+		positionYTxt += distanceInterTexte;
+		g2d.drawString(txtPoussee, positionXInitialeTxt, positionYTxt);
+		positionYTxt += distanceInterTexte;
+		g2d.drawString(txtConsommationCarburant1, positionXInitialeTxt, positionYTxt);
+		positionYTxt += distanceInterLigne;
+		g2d.drawString(txtConsommationCarburant2, positionXInitialeTxt, positionYTxt);
+		
+		g2d.setColor(couleurInitiale);
+	}
+
+	/**
+	 * Méthode pour créer le texte spécifique aux moteurs
+	 */
+	private void creerTexteReservoir() {
+		creerTexte();
+		txtPoussee = ("Poussee (N): " + poussee);
+		txtConsommationCarburant1 = ("Consommation du");
+		txtConsommationCarburant2 = ("carburant (L/s): " + consommationCarburant);
+	}
+
+}

@@ -1,0 +1,79 @@
+package nuage;
+
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.net.URL;
+
+import javax.imageio.ImageIO;
+
+import interfaces.Dessinable;
+import interfaces.DessinableNuage;
+
+public class Nuage implements DessinableNuage {
+	private double x, y;
+	private double vitesseX;
+	private Image imageNuage;
+	private final String NOM_IMAGE = "Nuage.png";
+	private final double DIMENSIONS_NUAGE = 8;
+
+	public Nuage(double x, double y, double vitesseX) {
+		this.x = x;
+		this.y = y;
+		this.vitesseX = vitesseX;
+		
+		URL urlImage = getClass().getClassLoader().getResource(NOM_IMAGE);
+		
+		if(urlImage == null) {
+			System.out.println("L'image" + NOM_IMAGE + "est introuvable");
+		}
+		
+		try {
+			imageNuage = ImageIO.read(urlImage);
+		} catch (IOException e) {
+			System.out.println("Il est impossible de lire le fichier" + NOM_IMAGE);
+		}
+	}
+	
+	@Override
+	public void dessinerNuage(Graphics2D g2d, AffineTransform mat) {
+		Rectangle2D.Double rectImageReelle = new Rectangle2D.Double(x, y, DIMENSIONS_NUAGE, DIMENSIONS_NUAGE);
+		Shape rectTransfo = mat.createTransformedShape(rectImageReelle);
+		Rectangle2D rectCoordTransfo = rectTransfo.getBounds2D();
+		Image imageADessiner = imageNuage.getScaledInstance((int) rectCoordTransfo.getWidth(), (int) rectCoordTransfo.getHeight(), Image.SCALE_SMOOTH);
+		g2d.drawImage(imageADessiner, (int)	Math.round(rectCoordTransfo.getX()), (int) Math.round(rectCoordTransfo.getY()), null);
+	}
+	
+	public void bougerNuageLateralement(double deltaT) {
+		this.x += deltaT * this.vitesseX; 
+	}
+
+	public double getX() {
+		return x;
+	}
+
+	public void setX(double x) {
+		this.x = x;
+	}
+
+	public double getY() {
+		return y;
+	}
+
+	public void setY(double y) {
+		this.y = y;
+	}
+
+	public double getVitesseX() {
+		return vitesseX;
+	}
+
+	public void setVitesseX(double vitesseX) {
+		this.vitesseX = vitesseX;
+	}
+	
+
+}

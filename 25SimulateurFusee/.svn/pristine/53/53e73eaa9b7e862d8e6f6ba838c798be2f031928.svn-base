@@ -1,0 +1,66 @@
+package ballondessinable;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Stroke;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+
+import interfaces.Dessinable;
+import interfaces.DessinableBallon;
+import pieces.Capsule;
+import pieces.Pieces;
+
+public class BallonCapsule extends BallonGenerique {
+
+	private double forceRCS;
+	private String txtRCS;
+	private Rectangle2D.Double rectangleBallon;
+	private int positionXInitialeTxt = 2, positionYInitialeTxt = 2, positionYTxt, distanceInterTexte, longueurBallon, hauteurBallon;
+
+	public BallonCapsule(Capsule capsule, int longueurBallon, int hauteurBallon) {
+		super(capsule.getNomPiece(), capsule.getMasse());
+		this.forceRCS = capsule.getForceRCS();
+		this.distanceInterTexte = getDistanceInterTexte();
+		this.longueurBallon = longueurBallon;
+		this.hauteurBallon = hauteurBallon;
+		
+		creerTexteCapsule();
+	}
+
+	//Ballon situé en haut à droite, ainsi soustraire la hauteur du ballon
+	public void dessinerBallon(Graphics2D g2d, int x, int y, int longueur, int hauteur) {
+		super.dessinerBallon(g2d, x, y, longueur, hauteur);
+		positionXInitialeTxt = x + 4;
+		positionYInitialeTxt = y + 14;
+		
+		Color couleurInitiale = g2d.getColor();
+		g2d.setColor(getCouleurBallon());
+		
+		g2d.fill(getRectangleBallon());
+		g2d.setColor(getCouleurContour());
+		g2d.setStroke(new BasicStroke(1));
+		g2d.draw(getRectangleBallon());
+		
+		g2d.setColor(getCouleurTexte());
+		positionYTxt = positionYInitialeTxt;
+		g2d.drawString(getTxtNom(), positionXInitialeTxt, positionYTxt);
+		positionYTxt += distanceInterTexte;
+		g2d.drawString(getTxtMasse(), positionXInitialeTxt, positionYTxt);
+		positionYTxt += distanceInterTexte;
+		g2d.drawString(txtRCS, positionXInitialeTxt, positionYTxt);
+		
+		g2d.setColor(couleurInitiale);
+	}
+
+	private void creerTexteCapsule() {
+		/*Font font = new Font("LucidaSans", Font.PLAIN, 14);
+		AttributedString atString= new AttributedString("Example text string");
+		atString.addAttribute(TextAttribute.FONT, font);
+		graphic.drawString(atString.getIterator(),x,y);*/
+		creerTexte();
+		txtRCS = ("Force RCS (N): " + forceRCS);
+	}
+
+}

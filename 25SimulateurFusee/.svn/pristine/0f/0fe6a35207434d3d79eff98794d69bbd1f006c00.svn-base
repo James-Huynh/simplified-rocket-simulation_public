@@ -1,0 +1,444 @@
+package zonededessin;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.net.URL;
+
+import javax.imageio.ImageIO;
+import javax.swing.JPanel;
+import javax.swing.event.EventListenerList;
+
+import ecouteurspersonnalises.MettreAJourListener;
+import modelephysique.ModelePhysique;
+import moteurphysique.MoteurPhysiqueOrbite;
+import pieces.EnsemblePieces;
+import pieces.Pieces;
+import vecteur.Vecteur;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+
+//Les sons
+//http://stackoverflow.com/questions/30587437/how-to-play-wav-files-in-java-looped
+
+/**
+ * La classe ZoneDessinOrbitale s'occupe de tous les fonctions reliées à la phase orbitale
+ * @author James Huynh
+ *
+ */
+public class ZoneDessinOrbitale extends JPanel implements Runnable {
+
+	private static final long serialVersionUID = 5489462617554236859L;
+
+	private final EventListenerList OBJETS_ENREGISTRES = new EventListenerList();
+
+	private double hauteurMonde, pixelsParUniteX, pixelsParUniteY;
+	private final double RAYON_TERRE = 6371000, DISTANCE_ATMOSPHERE = 100000, LONGUEUR_DU_MONDE = 2*RAYON_TERRE + 150*DISTANCE_ATMOSPHERE, MASSE_TERRE = 5.972e24; // à modifier
+
+	private int tempsDuSleep = 5;
+	private double deltaT = 0.005, facteurEcoulementTemps = 15; // à enlever
+	private boolean enCoursDAnimation= false, premiereFois = true;
+
+	private Image imageTerre = null, imageEspace = null;
+	private int facteurImageFusee = 200000; // à modifier
+	private String nomImageTerre = "imageTopTerre.png", nomImageEspace = "imageFondEspace.jpg";
+	private int positionXImageTerre, positionYImageTerre;
+	private double largeurModifieImageTerre, hauteurModifieImageTerre;
+
+	private Path2D.Double lignesEchelles = null;
+	private final double ECHELLE = 500000, NB_SEGMENTS_ECHELLES = 5;
+
+	private Vecteur position, vitesse, acceleration, vForceGrav, vForceRCS, sommeForces;
+	private double masseFusee = 100, forceRCS; // les deux à enlever
+	private Pieces pieceCapsule;
+	private EnsemblePieces ensemblePieces;
+
+	private String txtEchelle = ("500km / intervalle, "  + "N.B. La fusée n'est pas à l'échelle. Elle a été grossie de " + facteurImageFusee + " fois."),
+			txtMessageFin = "La simulation est terminée, veuillez recommencer.";
+	private double positionXLigne, positionYLigne, positionTxtEchelleX, positionTxtEchelleY, positionTxtMessageFinX = 0, positionTxtMessageFinY;
+	private int taillePoliceMessageFin = 25;
+	private boolean afficherMessageFin = false;
+
+	/**
+	 * Le constructeur de la zone de dessin pour la phase orbitale de la fusée
+	 * @param ensemblePieces Le tableau contenant l'ensemble des pièces courantes constituant la fusée
+	 */
+	public ZoneDessinOrbitale(EnsemblePieces ensemblePieces) {
+		setFocusable(true);
+		addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				//debut
+				ajouterForceRCS(e.getKeyCode(), forceRCS);
+				//fin
+			}
+			@Override
+			public void keyReleased(KeyEvent e) {
+				//debut
+				retirerForceRCS();
+				//fin
+			}
+		});
+		this.ensemblePieces = ensemblePieces;
+		setCapsule(ensemblePieces.getCapsule());
+		forceRCS = ensemblePieces.getPousseeRCS();
+		forceRCS = 500;
+		setLayout(null);
+
+		initialiserImages();
+
+		position = new Vecteur (0.0, RAYON_TERRE + 100000.0);
+		vitesse =  new Vecteur (5000.0, 1000.0);
+		acceleration = new Vecteur (0.0, 0.0);
+		vForceGrav = new Vecteur (0.0, 0.0);
+		vForceRCS = new Vecteur (0.0, 0.0);
+		sommeForces = new Vecteur (0.0, 0.0);
+		//demarrerAnimation(); //à enlever
+	}
+
+	/**
+	 * Le paintComponent pour dessiner tous les éléments reliés à la phase de l'orbite
+	 * @param g Le contexte graphique
+	 */
+	@Override
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		Graphics2D g2d = (Graphics2D) g;	
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+
+		if (premiereFois) {
+			ModelePhysique modeleTemp = new ModelePhysique(getWidth(), getHeight(), LONGUEUR_DU_MONDE);
+			hauteurMonde = modeleTemp.getHautUnitesReelles();
+		}
+
+		ModelePhysique modele = new ModelePhysique(getWidth(), getHeight(),LONGUEUR_DU_MONDE/2, hauteurMonde/2, LONGUEUR_DU_MONDE); //Creer modele physique, THOMAS NAVAIT PAS RAISON
+		AffineTransform matMC = modele.getMatMC();
+		matMC.scale(1, -1);
+		transformerImageTerre(matMC);
+		transformerImageEspace(matMC);
+
+		if (premiereFois) { //Initialiser les valeurs de depart nécessitant le modele temporaire
+			premiereFois = false;
+			positionXImageTerre = (int) (getWidth()/2-largeurModifieImageTerre/2);
+			positionYImageTerre = (int) (getHeight()/2-hauteurModifieImageTerre/2);
+			modele.getHautPixels();
+			modele.getLargPixels();
+			pixelsParUniteX = modele.getPixelsParUniteX();
+			pixelsParUniteY = modele.getPixelsParUniteY();
+			positionTxtMessageFinX = 75;
+			positionTxtMessageFinY = (hauteurMonde/2 - RAYON_TERRE)*pixelsParUniteY - 10;
+		}
+
+		g2d.drawImage(imageEspace,0,0, null); //Dessiner l'image de l'espace
+		g2d.drawImage(imageTerre, positionXImageTerre, positionYImageTerre, null); //Dessiner l'image de la terre
+		
+		pieceCapsule.dessinerAvecGrandissement(g2d, matMC, 0, position.getX(), position.getY(), 0, 0, facteurImageFusee);
+		
+		g2d.setColor(Color.GREEN); //Dessiner l'échelle de distance et son texte
+		creerEchelles(g2d, ECHELLE, NB_SEGMENTS_ECHELLES); 
+		g2d.draw(matMC.createTransformedShape(lignesEchelles));
+		g2d.setColor(Color.MAGENTA);
+		g2d.drawString(txtEchelle, (int) positionTxtEchelleX, (int) positionTxtEchelleY); 
+
+		if (afficherMessageFin) { //Dessiner le message de fin
+			g2d.setColor(Color.WHITE);
+			g2d.setFont(new Font("Georgia", Font.PLAIN, taillePoliceMessageFin)); //Police variable
+			g2d.drawString(txtMessageFin, (int) positionTxtMessageFinX, (int) positionTxtMessageFinY);
+		}
+	}
+
+	/**
+	 * Méthode ayant pour but d'animer la fusée pendant son vol orbital
+	 */
+	public void run() {
+		while (enCoursDAnimation) {
+
+			System.out.println("Position: " + position);
+			System.out.println("Vitesse: " + vitesse);
+			System.out.println("vForceGrav: " + vForceGrav);
+			System.out.println("vForceRCS: " + vForceRCS + "\n");
+
+			for (int k = 0; k < facteurEcoulementTemps; k++) {
+				vForceGrav = MoteurPhysiqueOrbite.forceGravitationnelle(masseFusee, MASSE_TERRE, position);
+				sommeForces = MoteurPhysiqueOrbite.sommeForces(vForceGrav, vForceRCS);
+				MoteurPhysiqueOrbite.unCalculOrbite(sommeForces, position, vitesse, acceleration, masseFusee, deltaT);
+			}
+
+			leveEvenAffichagePhysique();
+			repaint();
+
+			if(!premiereFois) {
+				if (verifierFinSimulation()) {
+					gameOver();
+				}
+			}
+
+			try {
+				Thread.sleep(tempsDuSleep);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		System.out.println("Le thread est mort...");
+	}
+
+	/**
+	 * Méthode pour transformer l'image initial de la Terre pour qu'elle soit dans les bonnes dimensions relétant la realité 
+	 * @param mat La matrice pour convertir des objets du monde réel vers l'espace en pixel
+	 */
+	private void transformerImageTerre (AffineTransform mat) {
+		AffineTransform matTemporaire = mat;
+		Rectangle2D.Double imageFantome = new Rectangle2D.Double(0, 0, 2*RAYON_TERRE, 2*RAYON_TERRE); //Unites Reelles
+		Shape imageFantomeTransforme = matTemporaire.createTransformedShape(imageFantome); //Unites pixels
+		Rectangle2D rectCoordImageTransforme = imageFantomeTransforme.getBounds2D();
+
+		imageTerre = imageTerre.getScaledInstance((int) rectCoordImageTransforme.getWidth(), (int) rectCoordImageTransforme.getHeight(), Image.SCALE_SMOOTH);
+		largeurModifieImageTerre = rectCoordImageTransforme.getWidth();
+		hauteurModifieImageTerre = rectCoordImageTransforme.getHeight();
+	}
+	
+	private void transformerImageEspace (AffineTransform mat) {
+		AffineTransform matTemporaire = mat;
+		Rectangle2D.Double imageFantome = new Rectangle2D.Double(0, 0, LONGUEUR_DU_MONDE, hauteurMonde); //Unites Reelles
+		Shape imageFantomeTransforme = matTemporaire.createTransformedShape(imageFantome); //Unites pixels
+		Rectangle2D rectCoordImageTransforme = imageFantomeTransforme.getBounds2D();
+		imageEspace = imageEspace.getScaledInstance((int) rectCoordImageTransforme.getWidth(), (int) rectCoordImageTransforme.getHeight(), Image.SCALE_SMOOTH);
+	}
+
+	/**
+	 * Méthode pour initialiser la phase orbite à la suite de la cessation de la phase du décollage
+	 */
+	public void initialiserVolOrbital() {
+		requestFocus();
+		vitesse = ensemblePieces.getVitesseOrbital();
+		System.out.println("Vitesse: " + vitesse);
+		setCapsule(ensemblePieces.getCapsule());
+		masseFusee = pieceCapsule.getMasse();
+		demarrerAnimation();
+	}
+
+	/**
+	 * Méthode pour débuter l'animation de la zone de dessin
+	 */
+	private void demarrerAnimation() {
+		if (!enCoursDAnimation) { 
+			Thread proc = new Thread(this);
+			enCoursDAnimation = true;
+			proc.start();
+		}
+	}
+
+	/**
+	 * Méthode qui ajoute une force à la fusée provenant du système RCS de la fusée
+	 * @param e La touche directionnel appuyée
+	 * @param RCS La valeur de la force RCS de la capsule
+	 */
+	public void ajouterForceRCS(int touche, double forceRCS) {
+		vForceRCS = MoteurPhysiqueOrbite.forceRCS(touche, forceRCS);
+	}
+
+	/**
+	 * Méthode qui retourne la force RCS sous forme de vecteur
+	 * @return La force RCS
+	 */
+	public Vecteur getForceRCS() {
+		return this.vForceRCS;
+	}
+
+	/**
+	 * Méthode qui retire la force du système RCS de la fusée
+	 */
+	public void retirerForceRCS() { 
+		vForceRCS = new Vecteur (0.0, 0.0);
+	}
+
+	/**
+	 * Méthode pour enregistrer un objet comme écouteur
+	 * @param obj Un élément de la classe d'écouteurs personnalisés
+	 */
+	public void addMettreAJourListenerListener (MettreAJourListener obj) {
+		OBJETS_ENREGISTRES.add(MettreAJourListener.class, obj);
+	}
+
+	/**
+	 * Méthode pour signaler une levée d'évenement dans lequel on demande l'affichage des paramètres physiques
+	 */
+	private void leveEvenAffichagePhysique() {
+		for (MettreAJourListener ecout: OBJETS_ENREGISTRES.getListeners(MettreAJourListener.class)) {
+			ecout.ParametresOrbitale();
+		}
+	}
+
+	/**
+	 * Méthode qui initialise la capsule correspondant à la fusée elle-même
+	 * @param capsule La capsule de la fusée
+	 */
+	public void setCapsule (Pieces capsule) {
+		this.pieceCapsule = capsule;
+	}
+
+	/**
+	 * Méthode pour vérifier si les conditions sont atteintes pour signaler l'arrêt de l'animation de la fusée
+	 * @return Vrai ou faux
+	 */
+	private boolean verifierFinSimulation() { //Fusee touche Terre ou sort de l'ecran NE MARCHE PAS
+		double posXAbs = Math.abs(position.getX());
+		double posYAbs = Math.abs(position.getY());
+
+		if (posXAbs <= RAYON_TERRE && posYAbs <= RAYON_TERRE) {
+			System.out.println("Rayon Terre atteinte: " + RAYON_TERRE);
+			System.out.println(position);
+			return true;
+		}
+		if (posXAbs >= LONGUEUR_DU_MONDE/2 || posYAbs >= hauteurMonde/2) { 
+			System.out.println("Extremité de l'espace atteinte");
+			System.out.println(position);
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Méthode ayant pour but d'exécuter tous les tâches reliées à la fin de la simulation
+	 */
+	private void gameOver() {
+		enCoursDAnimation = false;
+		afficherMessageFin = true;
+		
+		//Message de fin + reset + retour à l'assemblage
+	}
+
+	/**
+	 * Méthode pour remettre de l'ordre dans les valeurs de départ en vue d'un prochain essai
+	 */
+	public void réinitialiserValeursOrbitales() {
+		position = new Vecteur (0.0, RAYON_TERRE + 100000.0);
+		vitesse =  new Vecteur (0.0, 0.0);
+		acceleration = new Vecteur (0.0, 0.0);
+		vForceGrav = new Vecteur (0.0, 0.0);
+		vForceRCS = new Vecteur (0.0, 0.0);
+		sommeForces = new Vecteur (0.0, 0.0);
+		masseFusee = 0;
+		forceRCS = 0;
+		
+		//appelé quand bouton pour revenir à l'assemblage chosi sinon capsule reset d'avance
+	}
+
+	/**
+	 * Méthode effectuant l'importation des images pour la zone orbitale
+	 */
+	private void initialiserImages() {
+		URL urlImageTerre = getClass().getClassLoader().getResource(nomImageTerre);
+		URL urlImageEspace = getClass().getClassLoader().getResource(nomImageEspace);
+		if(urlImageTerre == null) {
+			System.out.println("L'image " + nomImageTerre + " est introuvable");
+		}
+		if(urlImageEspace == null) {
+			System.out.println("L'image " + nomImageEspace + " est introuvable");
+		}
+		try {
+			imageTerre = ImageIO.read(urlImageTerre);
+		} catch (IOException e) {
+			System.out.println("Il est impossible de lire le fichier" + nomImageTerre);
+		}
+		try {
+			imageEspace = ImageIO.read(urlImageEspace);
+		} catch (IOException e) {
+			System.out.println("Il est impossible de lire le fichier" + nomImageEspace);
+		}
+	}
+
+	/**
+	 * Méthode pour créer l'échelle de la distance dans l'espace
+	 * @param g2d Le contexte graphique
+	 * @param uniteReference L'unité de référence pour afficher sur l'écran
+	 * @param Segments Le nombre de segment représentant l'echelle voulant être affiché
+	 */
+	private void creerEchelles (Graphics g2d, double uniteReference, double Segments) {
+		double nbSegments = Segments;
+		double longueurSegmentsX = uniteReference;
+		double longueurSegmentsY = longueurSegmentsX/2;
+		positionXLigne = -LONGUEUR_DU_MONDE/2 + LONGUEUR_DU_MONDE/50;
+		positionYLigne = hauteurMonde*0.90/2;
+		lignesEchelles = new Path2D.Double();
+
+		lignesEchelles.moveTo(positionXLigne, positionYLigne);
+		lignesEchelles.lineTo(positionXLigne, positionYLigne + longueurSegmentsY);
+		for (int k = 0; k < nbSegments; k++) {
+			lignesEchelles.moveTo(positionXLigne, positionYLigne);
+			positionXLigne += longueurSegmentsX;
+			lignesEchelles.lineTo(positionXLigne, positionYLigne);
+
+			lignesEchelles.moveTo(positionXLigne, positionYLigne);
+			lignesEchelles.lineTo(positionXLigne, positionYLigne + longueurSegmentsY);
+		}
+
+		positionTxtEchelleX = 15 + (LONGUEUR_DU_MONDE/2 + positionXLigne)*pixelsParUniteX;
+		positionTxtEchelleY = (positionYLigne - hauteurMonde/2.5)*pixelsParUniteY;
+	}
+
+	/**
+	 * Méthode qui retourne le vecteur position de la fusée
+	 * @return La position de la fusée 
+	 */
+	public Vecteur getPosition() {
+		return position;
+	}
+
+	/**
+	 * Méthode qui initialise le vecteur position de la fusée
+	 * @param position La position de la fusée
+	 */
+	public void setPosition(Vecteur position) {
+		this.position = position;
+	}
+
+	/**
+	 * Méthode qui retourne le vecteur vitesse de la fusée
+	 * @return La vitesse de la fusée
+	 */
+	public Vecteur getVitesse() {
+		return vitesse;
+	}
+
+	/**
+	 * Méthode qui initialise le vecteur vitesse de la fusée
+	 * @param vitesse La vitesse de la fusée
+	 */
+	public void setVitesse(Vecteur vitesse) {
+		this.vitesse = vitesse;
+	}
+
+	/**
+	 * Méthode qui retourne le vecteur accélération de la fusée
+	 * @return L'accélération de la fusée
+	 */
+	public Vecteur getAcceleration() {
+		return acceleration;
+	}
+
+	/**
+	 * Méthode qui initialise le vecteur accélération de la fusée
+	 * @return L'accélération de la fusée
+	 */
+	public void setAcceleration(Vecteur acceleration) {
+		this.acceleration = acceleration;
+	}
+
+	/**
+	 * Méthode qui initialise le facteur qui modifie l'écoulement du temps de l'animation
+	 * @param n Le facteur plus grand ou égal à un
+	 */
+	public void setEcoulementTemps(int n) {
+		this.facteurEcoulementTemps = n;
+	}
+}
