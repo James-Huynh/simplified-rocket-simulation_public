@@ -1,4 +1,7 @@
 # Simplified-Rocket-Simulation
 
+Developped by James Huynh and Thomas Corbeil
+Supervised by Caroline Houle
 
-Cegep year-long project
+Features three phases: construction, launch, orbit
+  
